@@ -8,8 +8,8 @@ from PyQt5.QtCore import QUrl
 
 
 class Main(QMainWindow):
-    initial_width = 1080
-    initial_height = 720
+    initial_width = 1350
+    initial_height = 900
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -45,6 +45,7 @@ class QtBrowser(QWidget):
         self.web = QWebEngineView()
         grid.addWidget(self.web, 1, 0, 1, 4)
         self.web.urlChanged.connect(self.update_entry)
+        self.web.load(QUrl('https://further-reading.net'))
 
         back_button = QPushButton('Back')
         back_button.clicked.connect(self.web.back)
