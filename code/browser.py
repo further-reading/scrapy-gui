@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import (
     QMainWindow, QGridLayout,
 )
 from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtCore import QUrl
 
 
 class Main(QMainWindow):
@@ -33,19 +34,6 @@ class QtBrowser(QWidget):
         grid = QGridLayout()
         self.setLayout(grid)
 
-        back_button = QPushButton('Back')
-        back_button.clicked.connect(self.go_back)
-        grid.addWidget(back_button, 0, 0)
-
-        forward_button = QPushButton('Forward')
-        forward_button.clicked.connect(self.go_forward)
-        forward_button.setDisabled(True)
-        grid.addWidget(forward_button, 0, 1)
-
-        refresh_button = QPushButton('Refresh')
-        refresh_button.clicked.connect(self.refresh_page)
-        grid.addWidget(refresh_button, 0, 2)
-
         go_button = QPushButton('Go')
         go_button.clicked.connect(self.go_to_page)
         grid.addWidget(go_button, 0, 3)
@@ -56,18 +44,28 @@ class QtBrowser(QWidget):
 
         self.web = QWebEngineView()
         grid.addWidget(self.web, 1, 0, 1, 4)
+        self.web.urlChanged.connect(self.update_entry)
 
-    def go_back(self):
-        pass
+        back_button = QPushButton('Back')
+        back_button.clicked.connect(self.web.back)
+        grid.addWidget(back_button, 0, 0)
 
-    def go_forward(self):
-        pass
-
-    def refresh_page(self):
-        pass
+        forward_button = QPushButton('Forward')
+        forward_button.clicked.connect(self.web.forward)
+        grid.addWidget(forward_button, 0, 1)
 
     def go_to_page(self):
-        print('foo')
+        entered_page = self.entry_box.text()
+        if not entered_page.startswith('http'):
+            entered_page = f'https://{entered_page}'
+        elif not entered_page.startswith('https'):
+            entered_page = entered_page.replace('http', 'https', 1)
+
+        self.web.load(QUrl(entered_page))
+
+    def update_entry(self):
+        qurl = self.web.url()
+        self.entry_box.setText(qurl.url())
 
 
 if __name__ == '__main__':
