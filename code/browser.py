@@ -1,7 +1,8 @@
 import sys
+from parsel import Selector
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QPushButton, QLineEdit,
-    QMainWindow, QGridLayout,
+    QMainWindow, QGridLayout, QDialog, QPlainTextEdit
 )
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtCore import QUrl
@@ -67,6 +68,28 @@ class QtBrowser(QWidget):
     def update_entry(self):
         qurl = self.web.url()
         self.entry_box.setText(qurl.url())
+
+
+class Test_CSS_Dialog(QDialog):
+    def __init__(self, *args, webview, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.webview = webview
+        self.initUI()
+
+    def initUI(self):
+        self.query = QPlainTextEdit()
+
+    def do_query(self):
+        query = self.query.toPlainText()
+        html = self.get_html()
+        sel = Selector(text=html)
+        results = sel.css(query).get()
+        return results
+
+    def get_html(self):
+        qpage = self.webview.page()
+        html = qpage.toHtml()
+        return html
 
 
 if __name__ == '__main__':
