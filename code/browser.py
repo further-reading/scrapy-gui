@@ -11,8 +11,11 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtCore import QUrl
 
-INITIAL_WIDTH = 2000
-INITIAL_HEIGHT = 1200
+MAIN_WIDTH = 2000
+MAIN_HEIGHT = 1200
+
+POP_OUT_WIDTH = MAIN_WIDTH/2
+POP_OUT_HEIGHT = MAIN_HEIGHT/2
 
 class Main(QMainWindow):
     def __init__(self, *args, **kwargs):
@@ -22,7 +25,7 @@ class Main(QMainWindow):
     def init_ui(self):
         self.setWindowTitle('Browser')
         self.setCentralWidget(QtBrowser(self))
-        self.resize(INITIAL_WIDTH, INITIAL_HEIGHT)
+        self.resize(MAIN_WIDTH, MAIN_HEIGHT)
         self.show()
 
 
@@ -101,8 +104,8 @@ class AnalysisDialog(QDialog):
         self.html = self.get_html_source()
         self.initUI()
         self.resize(
-            INITIAL_WIDTH/2,
-            INITIAL_HEIGHT/2,
+            POP_OUT_WIDTH,
+            POP_OUT_HEIGHT,
         )
 
     def initUI(self):
