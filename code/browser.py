@@ -6,7 +6,8 @@ from PyQt5.QtWidgets import (
     QApplication, QWidget, QPushButton, QLineEdit,
     QMainWindow, QGridLayout, QDialog, QPlainTextEdit,
     QTableWidget, QLabel, QTabWidget, QVBoxLayout,
-    QTableWidgetItem, QAbstractScrollArea
+    QTableWidgetItem, QAbstractScrollArea, QCheckBox,
+    QRadioButton,
 )
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtCore import QUrl
@@ -14,8 +15,8 @@ from PyQt5.QtCore import QUrl
 MAIN_WIDTH = 2000
 MAIN_HEIGHT = 1200
 
-POP_OUT_WIDTH = MAIN_WIDTH/2
-POP_OUT_HEIGHT = MAIN_HEIGHT/2
+POP_OUT_WIDTH = MAIN_WIDTH * 0.75
+POP_OUT_HEIGHT = MAIN_HEIGHT * 0.75
 
 class Main(QMainWindow):
     def __init__(self, *args, **kwargs):
@@ -138,44 +139,190 @@ class ParserTab(QWidget):
     def __init__(self, *args, html, **kwargs):
         super().__init__(*args, **kwargs)
         self.html = html
+        self.use_re = False
         self.initUI()
 
     def initUI(self):
         grid = QGridLayout()
         self.setLayout(grid)
 
-        css_label = QLabel('Enter CSS Query:')
-        grid.addWidget(css_label, 0, 0)
+        self.css_section = QueryEntry(label='CSS Query:')
+        self.css_section.initUI()
+        grid.addWidget(self.css_section, 0, 0)
 
-        self.query = QPlainTextEdit()
-        grid.addWidget(self.query, 0, 1)
+        self.re_section = RegExEntry(label='Regex:')
+        self.re_section.initUI()
+        grid.addWidget(self.re_section, 1, 0)
 
-        run_query_button = QPushButton('Run CSS Query')
-        grid.addWidget(run_query_button, 1, 1)
-        run_query_button.clicked.connect(self.do_query)
+        self.function_section = FunctionEntry(label='Function:')
+        self.function_section.initUI()
+        grid.addWidget(self.function_section, 0, 1, 2, 1)
+
+        run_button = QPushButton('Run Query')
+        run_button.clicked.connect(self.do_query)
+        grid.addWidget(run_button, 2, 0)
 
         self.results = QTableWidget()
         self.results.setSizeAdjustPolicy(
-            QAbstractScrollArea.AdjustToContents)
-        grid.addWidget(self.results, 2, 0, 1, 2)
+            QAbstractScrollArea.AdjustToContents,
+        )
+        grid.addWidget(self.results, 3, 0, 1, 2)
 
     def do_query(self):
-        query = self.query.toPlainText()
+        results = self.get_results()
+
+        if not results:
+            # add code to say no results
+            return
+
+        use_function = self.function_section.use_function
+        if use_function:
+            # add code here to catch errors in function
+            results = self.apply_function(results)
+
+        self.results.clearContents()
+        self.results.setColumnCount(1)
+        self.results.setRowCount(len(results))
+
+        for index, result in enumerate(results):
+            self.results.insertRow(index)
+            self.results.setItem(
+                index,
+                0,
+                QTableWidgetItem(result),
+            )
+        self.results.resizeColumnsToContents()
+        self.results.resizeRowsToContents()
+
+    def get_results(self):
+        query = self.css_section.get_query()
+        if self.re_section.use_re:
+            regex = self.re_section.get_query()
+        else:
+            regex = None
+
         sel = Selector(text=self.html)
-        results = sel.css(query).getall()
-        if results:
-            self.results.clearContents()
-            self.results.setColumnCount(1)
-            # self.results.setRowCount(len(results))
-            for index, result in enumerate(results):
-                self.results.insertRow(index)
-                self.results.setItem(
-                    index,
-                    0,
-                    QTableWidgetItem(result),
-                )
-            self.results.resizeColumnsToContents()
-            self.results.resizeRowsToContents()
+        # add try/except here to handle bad query
+        results = sel.css(query)
+
+        if not results:
+            return
+
+        if regex:
+            # add try/except here to handle bad regex
+            results = results.re(regex)
+        else:
+            results = results.getall()
+
+        return results
+
+    def apply_function(self, results):
+        function = self.function_section.get_query()
+        iterate = self.function_section.iterate
+        results_out = []
+        if iterate:
+            function = f'{function}\nresults_out.append(result)'
+            for result in results:
+                # function is a string which contains operations on result
+                exec(function)
+        else:
+            # function is a string which contains operations on results
+            function = f'{function}\nresults_out.append(results)'
+            exec(function)
+            print(results_out)
+
+        return results_out
+
+
+class QueryEntry(QWidget):
+    def __init__(self, *args, label, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.label = label
+
+    def initUI(self):
+        grid = QGridLayout()
+        self.setLayout(grid)
+
+        label = QLabel(self.label)
+        grid.addWidget(label, 0, 0)
+
+        self.query = QPlainTextEdit()
+        grid.addWidget(self.query, 1, 0)
+
+    def get_query(self):
+        return self.query.toPlainText()
+
+
+class RegExEntry(QueryEntry):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.use_re = False
+
+    def initUI(self):
+        grid = QGridLayout()
+        self.setLayout(grid)
+
+        label = QLabel(self.label)
+        grid.addWidget(label, 0, 0)
+
+        re_check = QCheckBox('Use RegEx')
+        re_check.setChecked(False)
+        re_check.clicked.connect(self.re_check_click)
+        grid.addWidget(re_check, 0, 1)
+
+        self.query = QPlainTextEdit()
+        grid.addWidget(self.query, 2, 0, 1, 2)
+        self.query.setDisabled(True)
+
+    def re_check_click(self):
+        self.use_re = not self.use_re
+        self.query.setDisabled(not self.use_re)
+
+
+class FunctionEntry(QueryEntry):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.use_function = False
+        self.iterate = False
+
+    def initUI(self):
+        grid = QGridLayout()
+        self.setLayout(grid)
+
+        self.query = QPlainTextEdit()
+        self.query.setDisabled(True)
+        grid.addWidget(self.query, 4, 0)
+
+        label = QLabel(self.label)
+        grid.addWidget(label, 0, 0)
+
+        none_button = QRadioButton('None')
+        none_button.clicked.connect(lambda: self.clicked(none_button))
+        grid.addWidget(none_button, 1, 0)
+        none_button.setChecked(True)
+
+        iterate_button = QRadioButton('Iterate')
+        iterate_button.clicked.connect(lambda: self.clicked(iterate_button))
+        grid.addWidget(iterate_button, 2, 0)
+
+        no_iterate_button = QRadioButton("Don't Iterate")
+        no_iterate_button.clicked.connect(lambda: self.clicked(no_iterate_button))
+        grid.addWidget(no_iterate_button, 3, 0)
+
+    def clicked(self, button):
+        text = button.text()
+        print(text)
+        if text == 'None':
+            self.use_function = False
+            self.query.setDisabled(True)
+        elif text == 'Iterate':
+            self.iterate = True
+            self.use_function = True
+            self.query.setDisabled(False)
+        elif text == 'Don\'t Iterate':
+            self.iterate = False
+            self.use_function = True
+            self.query.setDisabled(False)
 
 
 if __name__ == '__main__':
