@@ -7,16 +7,24 @@ from PyQt5.QtWidgets import (
     QMainWindow, QGridLayout, QDialog, QPlainTextEdit,
     QTableWidget, QLabel, QTabWidget, QVBoxLayout,
     QTableWidgetItem, QAbstractScrollArea, QCheckBox,
-    QRadioButton,
+    QRadioButton, QMessageBox
 )
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtCore import QUrl
+from cssselect.xpath import ExpressionError
 
 MAIN_WIDTH = 2000
 MAIN_HEIGHT = 1200
 
 POP_OUT_WIDTH = MAIN_WIDTH * 0.75
 POP_OUT_HEIGHT = MAIN_HEIGHT * 0.75
+
+HOME = 'http://quotes.toscrape.com/'
+
+
+class QueryError(Exception):
+    pass
+
 
 class Main(QMainWindow):
     def __init__(self, *args, **kwargs):
@@ -35,6 +43,7 @@ class QtBrowser(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.html = None
+        self.dial = None
         self.init_ui()
 
     def init_ui(self):
@@ -58,7 +67,7 @@ class QtBrowser(QWidget):
         grid.addWidget(self.web, 1, 0, 1, 5)
         self.web.urlChanged.connect(self.update_url)
         self.web.loadFinished.connect(self.loadFinished)
-        self.web.load(QUrl('http://quotes.toscrape.com/'))
+        self.web.load(QUrl(HOME))
 
         back_button = QPushButton('Back')
         back_button.clicked.connect(self.web.back)
@@ -83,11 +92,8 @@ class QtBrowser(QWidget):
         self.entry_box.setText(url)
 
     def open_css(self):
-        self.open_css_button.setDisabled(True)
         url = self.get_url()
-        dial = AnalysisDialog(url=url)
-        dial.exec()
-        self.open_css_button.setDisabled(False)
+        self.dial = AnalysisDialog(url=url, main=self)
 
     def get_url(self):
         qurl = self.web.url()
@@ -96,33 +102,46 @@ class QtBrowser(QWidget):
 
     def loadFinished(self):
         self.open_css_button.setDisabled(False)
+        if self.dial is not None:
+            url = self.get_url()
+            self.dial.update_url(url)
 
 
-class AnalysisDialog(QDialog):
-    def __init__(self, *args, url, **kwargs):
+class AnalysisDialog(QWidget):
+    def __init__(self, *args, url, main, **kwargs):
         super().__init__(*args, **kwargs)
         self.url = url
+        self.main = main
         self.html = self.get_html_source()
         self.initUI()
         self.resize(
             POP_OUT_WIDTH,
             POP_OUT_HEIGHT,
         )
+        self.show()
 
     def initUI(self):
         self.setWindowTitle('Tabs')
         tabs = QTabWidget()
         box = QVBoxLayout()
         self.setLayout(box)
-        parser = ParserTab(html=self.html)
-        tabs.addTab(parser, "Parser")
+        self.parser = ParserTab(html=self.html)
+        tabs.addTab(self.parser, "Parser")
 
-        html_source = QPlainTextEdit()
-        html_source.setPlainText(self.html)
-        html_source.setReadOnly(True)
-        tabs.addTab(html_source, 'Source')
+        self.html_source = QPlainTextEdit()
+        self.html_source.setPlainText(self.html)
+        self.html_source.setReadOnly(True)
+        tabs.addTab(self.html_source, 'Source')
 
         box.addWidget(tabs)
+
+    def update_url(self, url):
+        self.url = url
+        self.html = self.get_html_source()
+        self.html_source.setReadOnly(False)
+        self.html_source.setPlainText(self.html)
+        self.html_source.setReadOnly(True)
+        self.parser.html = self.html
 
     def get_html_source(self):
         # pyqt5 webengine has the final html including manipulation from javascript, etc
@@ -133,6 +152,10 @@ class AnalysisDialog(QDialog):
         soup = BeautifulSoup(html, 'html.parser')
         html_out = soup.prettify()
         return html_out
+
+    def closeEvent(self, *args, **kwargs):
+        self.main.dial = None
+        super().closeEvent(*args, **kwargs)
 
 
 class ParserTab(QWidget):
@@ -169,20 +192,39 @@ class ParserTab(QWidget):
         grid.addWidget(self.results, 3, 0, 1, 2)
 
     def do_query(self):
-        results = self.get_results()
+        try:
+            results = self.get_results()
 
-        if not results:
-            # add code to say no results
+            if not results:
+                message = f'No results found for css query'
+                QMessageBox.information(self, 'No Results', message)
+                return
+
+            use_regex = self.re_section.use_re
+            if use_regex:
+                results = self.regex_filter(results)
+                if not results:
+                    message = f'No results found for regex filter'
+                    QMessageBox.information(self, 'No Results', message)
+                    return
+            else:
+                results = results.getall()
+
+            use_function = self.function_section.use_function
+            if use_function:
+                results = self.apply_function(results)
+                if not results:
+                    message = f'No results found for custom function'
+                    QMessageBox.information(self, 'No Function Results', message)
+                    return
+        except QueryError:
+            # error occured on a step
+            # messaging handled in each method, so just end method
             return
-
-        use_function = self.function_section.use_function
-        if use_function:
-            # add code here to catch errors in function
-            results = self.apply_function(results)
 
         self.results.clearContents()
         self.results.setColumnCount(1)
-        self.results.setRowCount(len(results))
+        self.results.setRowCount(0)
 
         for index, result in enumerate(results):
             self.results.insertRow(index)
@@ -196,24 +238,24 @@ class ParserTab(QWidget):
 
     def get_results(self):
         query = self.css_section.get_query()
-        if self.re_section.use_re:
-            regex = self.re_section.get_query()
-        else:
-            regex = None
-
         sel = Selector(text=self.html)
-        # add try/except here to handle bad query
-        results = sel.css(query)
+        try:
+            results = sel.css(query)
+        except ExpressionError as e:
+            message = f'Error parsing css query\n\n{e}'
+            QMessageBox.critical(self, 'CSS Error', message)
+            raise QueryError
 
-        if not results:
-            return
+        return results
 
-        if regex:
-            # add try/except here to handle bad regex
+    def regex_filter(self, results):
+        regex = self.re_section.get_query()
+        try:
             results = results.re(regex)
-        else:
-            results = results.getall()
-
+        except Exception as e:
+            message = f'Error running regex\n\n{e}'
+            QMessageBox.critical(self, 'RegEx Error', message)
+            raise QueryError
         return results
 
     def apply_function(self, results):
@@ -223,13 +265,23 @@ class ParserTab(QWidget):
         if iterate:
             function = f'{function}\nresults_out.append(result)'
             for result in results:
-                # function is a string which contains operations on result
-                exec(function)
+                # function is a string which contains operations on result variable
+                try:
+                    exec(function)
+                except Exception as ex:
+
+                    message = f'Error running custom function\n\n{type(ex).__name__}: {ex.args}'
+                    QMessageBox.critical(self, 'Function Error', message)
+                    raise QueryError
         else:
             # function is a string which contains operations on results
             function = f'{function}\nresults_out.append(results)'
-            exec(function)
-            print(results_out)
+            try:
+                exec(function)
+            except Exception as ex:
+                message = f'Error running custom function\n\n{type(ex).__name__}: {ex.args}'
+                QMessageBox.critical(self, 'Function Error', message)
+                raise QueryError
 
         return results_out
 
@@ -311,7 +363,6 @@ class FunctionEntry(QueryEntry):
 
     def clicked(self, button):
         text = button.text()
-        print(text)
         if text == 'None':
             self.use_function = False
             self.query.setDisabled(True)
