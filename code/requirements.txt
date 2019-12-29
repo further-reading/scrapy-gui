@@ -1,2 +1,3 @@
 PyQt5==5.14.0
 PyQtWebEngine==5.14.0
+parsel==1.5.2
