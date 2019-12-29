@@ -4,10 +4,10 @@ from parsel import Selector
 from bs4 import BeautifulSoup
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QPushButton, QLineEdit,
-    QMainWindow, QGridLayout, QDialog, QPlainTextEdit,
+    QMainWindow, QGridLayout, QPlainTextEdit,
     QTableWidget, QLabel, QTabWidget, QVBoxLayout,
     QTableWidgetItem, QAbstractScrollArea, QCheckBox,
-    QRadioButton, QMessageBox
+    QRadioButton, QMessageBox, QAbstractButton,
 )
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtCore import QUrl
