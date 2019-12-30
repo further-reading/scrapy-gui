@@ -169,9 +169,9 @@ class Queries(BigHandleSplitter):
         self.function_section.query.setPlainText(
             """# import packages
 
-# must have 'my_fun' function with 'results' as argument and return a list
+# must have 'user_fun' function with 'results' as argument and return a list
 
-def my_fun(results):
+def user_fun(results):
   # your code
   return results"""
         )
@@ -263,15 +263,12 @@ def my_fun(results):
             QMessageBox.critical(self, 'Function Error', message)
             raise QueryError
 
-        with open('user_fun.py', 'w') as file:
-            file.write(function)
+        exec(function, globals())
         try:
-            from user_fun import user_fun
             results = user_fun(results)
         except Exception as e:
             message = f'Error running custom function\n\n{type(e).__name__}: {e.args}'
             message += f'\n\n{traceback.format_exc()}'
-            print('hello')
             QMessageBox.critical(self, 'Function Error', message)
             raise QueryError
 
