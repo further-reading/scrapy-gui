@@ -118,6 +118,7 @@ class BigHandleSplitter(QSplitter):
         self.setHandleWidth(1)
         self.setStyleSheet(self.css_sheet)
 
+
 class Queries(BigHandleSplitter):
     url = None
     html = None
