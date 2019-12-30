@@ -7,8 +7,7 @@ from PyQt5.QtWidgets import (
     QMainWindow, QGridLayout, QPlainTextEdit,
     QTableWidget, QLabel, QTabWidget, QSplitter,
     QTableWidgetItem, QAbstractScrollArea, QCheckBox,
-    QRadioButton, QMessageBox, QFrame,
-    QVBoxLayout
+    QRadioButton, QMessageBox, QFrame, QVBoxLayout
 )
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtCore import QUrl, Qt
