@@ -222,12 +222,13 @@ def my_fun(results):
         self.results.setRowCount(0)
 
         for index, result in enumerate(results):
-            self.results.insertRow(index)
-            self.results.setItem(
-                index,
-                0,
-                QTableWidgetItem(result),
-            )
+            if result is not None:
+                self.results.insertRow(index)
+                self.results.setItem(
+                    index,
+                    0,
+                    QTableWidgetItem(result),
+                )
         self.results.resizeColumnsToContents()
         self.results.resizeRowsToContents()
 
@@ -261,6 +262,7 @@ def my_fun(results):
             message = f'Custom function needs to be named user_fun and have results as argument'
             QMessageBox.critical(self, 'Function Error', message)
             raise QueryError
+
         with open('user_fun.py', 'w') as file:
             file.write(function)
         try:
