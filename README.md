@@ -1,2 +1,2 @@
-# QtBrowser
-A simple, basic webbrowser built in pyqt5
+# Scraping Browser
+A simple, Qt-Webengine powered web browser with built in functionality for basic webscraping support

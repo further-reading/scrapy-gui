@@ -4,20 +4,16 @@ from parsel import Selector
 from bs4 import BeautifulSoup
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QPushButton, QLineEdit,
-    QMainWindow, QGridLayout, QDialog, QPlainTextEdit,
-    QTableWidget, QLabel, QTabWidget, QVBoxLayout,
+    QMainWindow, QGridLayout, QPlainTextEdit,
+    QTableWidget, QLabel, QTabWidget, QSplitter,
     QTableWidgetItem, QAbstractScrollArea, QCheckBox,
-    QRadioButton, QMessageBox
+    QRadioButton, QMessageBox, QFrame, QVBoxLayout
 )
 from PyQt5.QtWebEngineWidgets import QWebEngineView
-from PyQt5.QtCore import QUrl
+from PyQt5.QtCore import QUrl, Qt
+from PyQt5.QtGui import QPixmap, QPainter, QCursor
 from cssselect.xpath import ExpressionError
-
-MAIN_WIDTH = 2000
-MAIN_HEIGHT = 1200
-
-POP_OUT_WIDTH = MAIN_WIDTH * 0.75
-POP_OUT_HEIGHT = MAIN_HEIGHT * 0.75
+from cssselect.parser import SelectorSyntaxError
 
 HOME = 'http://quotes.toscrape.com/'
 
@@ -33,27 +29,36 @@ class Main(QMainWindow):
 
     def init_ui(self):
         self.setWindowTitle('Browser')
-        self.setCentralWidget(QtBrowser(self))
-        self.resize(MAIN_WIDTH, MAIN_HEIGHT)
+        tabs = QTabWidget()
+        self.browser = QtBrowser(main=self)
+        self.queries = Queries(main=self)
+        self.source = QPlainTextEdit()
+        self.source.setReadOnly(True)
+        tabs.addTab(self.browser, 'Browser')
+        tabs.addTab(self.queries, 'Tools')
+        tabs.addTab(self.source, 'Source')
+        self.setCentralWidget(tabs)
         self.show()
+
+    def update_url(self, url):
+        self.queries.update_url(url)
+
+    def update_source(self, text):
+        self.source.setReadOnly(False)
+        self.source.setPlainText(text)
+        self.source.setReadOnly(True)
 
 
 class QtBrowser(QWidget):
-
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, main, **kwargs):
         super().__init__(*args, **kwargs)
+        self.main = main
         self.html = None
-        self.dial = None
         self.init_ui()
 
     def init_ui(self):
         grid = QGridLayout()
         self.setLayout(grid)
-
-        self.open_css_button = QPushButton('CSS')
-        self.open_css_button.clicked.connect(self.open_css)
-        grid.addWidget(self.open_css_button, 0, 4)
-        self.open_css_button.setDisabled(True)
 
         go_button = QPushButton('Go')
         go_button.clicked.connect(self.go_to_page)
@@ -64,21 +69,20 @@ class QtBrowser(QWidget):
         grid.addWidget(self.entry_box, 0, 2)
 
         self.web = QWebEngineView()
-        grid.addWidget(self.web, 1, 0, 1, 5)
+        grid.addWidget(self.web, 1, 0, 1, 4)
         self.web.urlChanged.connect(self.update_url)
         self.web.loadFinished.connect(self.loadFinished)
         self.web.load(QUrl(HOME))
 
-        back_button = QPushButton('Back')
+        back_button = BrowserButton(image=r'images/back.png')
         back_button.clicked.connect(self.web.back)
         grid.addWidget(back_button, 0, 0)
 
-        forward_button = QPushButton('Forward')
+        forward_button = BrowserButton(image=r'images/forward.png')
         forward_button.clicked.connect(self.web.forward)
         grid.addWidget(forward_button, 0, 1)
 
     def go_to_page(self):
-        self.open_css_button.setDisabled(True)
         entered_page = self.entry_box.text()
         if not entered_page.startswith('http'):
             entered_page = f'https://{entered_page}'
@@ -91,107 +95,88 @@ class QtBrowser(QWidget):
         url = self.get_url()
         self.entry_box.setText(url)
 
-    def open_css(self):
-        url = self.get_url()
-        self.dial = AnalysisDialog(url=url, main=self)
-
     def get_url(self):
         qurl = self.web.url()
         url = qurl.url()
         return url
 
     def loadFinished(self):
-        self.open_css_button.setDisabled(False)
-        if self.dial is not None:
-            url = self.get_url()
-            self.dial.update_url(url)
+        url = self.get_url()
+        self.main.update_url(url)
 
 
-class AnalysisDialog(QWidget):
-    def __init__(self, *args, url, main, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.url = url
+class BrowserButton(QPushButton):
+    def __init__(self, *args, image):
+        super().__init__(*args)
+        self.pixmap = QPixmap(image)
+        self.setCursor(QCursor(Qt.PointingHandCursor))
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.drawPixmap(event.rect(), self.pixmap)
+        self.update()
+
+
+class BigHandleSplitter(QSplitter):
+    css_sheet = """
+    QSplitter::handle {
+    background-color: #000
+    ;}
+    """
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.setHandleWidth(1)
+        self.setStyleSheet(self.css_sheet)
+
+
+class Queries(BigHandleSplitter):
+    url = None
+    html = None
+    use_re = False
+
+    def __init__(self, *args, main):
+        super().__init__(*args)
         self.main = main
-        self.html = self.get_html_source()
-        self.initUI()
-        self.resize(
-            POP_OUT_WIDTH,
-            POP_OUT_HEIGHT,
-        )
-        self.show()
-
-    def initUI(self):
-        self.setWindowTitle('Tabs')
-        tabs = QTabWidget()
-        box = QVBoxLayout()
-        self.setLayout(box)
-        self.parser = ParserTab(html=self.html)
-        tabs.addTab(self.parser, "Parser")
-
-        self.html_source = QPlainTextEdit()
-        self.html_source.setPlainText(self.html)
-        self.html_source.setReadOnly(True)
-        tabs.addTab(self.html_source, 'Source')
-
-        box.addWidget(tabs)
-
-    def update_url(self, url):
-        self.url = url
-        self.html = self.get_html_source()
-        self.html_source.setReadOnly(False)
-        self.html_source.setPlainText(self.html)
-        self.html_source.setReadOnly(True)
-        self.parser.html = self.html
-
-    def get_html_source(self):
-        # pyqt5 webengine has the final html including manipulation from javascript, etc
-        # for scraping with scrapy the first one matters, so will get again
-        # in future = look for way to grab initial html response from pyqt5
-        response = requests.get(self.url)
-        html = response.text
-        soup = BeautifulSoup(html, 'html.parser')
-        html_out = soup.prettify()
-        return html_out
-
-    def closeEvent(self, *args, **kwargs):
-        self.main.dial = None
-        super().closeEvent(*args, **kwargs)
-
-
-class ParserTab(QWidget):
-    def __init__(self, *args, html, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.html = html
-        self.use_re = False
         self.initUI()
 
     def initUI(self):
-        grid = QGridLayout()
-        self.setLayout(grid)
+        self.setOrientation(Qt.Vertical)
+        top = BigHandleSplitter(Qt.Horizontal)
+        left_frame = BigHandleSplitter(Qt.Vertical)
 
         self.css_section = QueryEntry(label='CSS Query:')
         self.css_section.initUI()
-        grid.addWidget(self.css_section, 0, 0)
+        left_frame.addWidget(self.css_section)
+
+        left_bottom = QFrame()
+        left_bottom_box = QVBoxLayout()
+        left_bottom.setLayout(left_bottom_box)
 
         self.re_section = RegExEntry(label='Regex:')
         self.re_section.initUI()
-        grid.addWidget(self.re_section, 1, 0)
-
-        self.function_section = FunctionEntry(label='Function:')
-        self.function_section.initUI()
-        grid.addWidget(self.function_section, 0, 1, 2, 1)
+        left_bottom_box.addWidget(self.re_section)
 
         run_button = QPushButton('Run Query')
         run_button.clicked.connect(self.do_query)
-        grid.addWidget(run_button, 2, 0)
+        left_bottom_box.addWidget(run_button)
+        left_frame.addWidget(left_bottom)
+        top.addWidget(left_frame)
+
+        self.function_section = FunctionEntry(label='Function:')
+        self.function_section.initUI()
+        top.addWidget(self.function_section)
+        self.addWidget(top)
 
         self.results = QTableWidget()
         self.results.setSizeAdjustPolicy(
             QAbstractScrollArea.AdjustToContents,
         )
-        grid.addWidget(self.results, 3, 0, 1, 2)
+        self.addWidget(self.results)
 
     def do_query(self):
+        if self.html is None:
+            return
         try:
             results = self.get_results()
 
@@ -241,7 +226,7 @@ class ParserTab(QWidget):
         sel = Selector(text=self.html)
         try:
             results = sel.css(query)
-        except ExpressionError as e:
+        except (ExpressionError, SelectorSyntaxError) as e:
             message = f'Error parsing css query\n\n{e}'
             QMessageBox.critical(self, 'CSS Error', message)
             raise QueryError
@@ -284,6 +269,21 @@ class ParserTab(QWidget):
                 raise QueryError
 
         return results_out
+
+    def update_url(self, url):
+        self.url = url
+        self.html = self.get_html_source()
+        self.main.update_source(self.html)
+
+    def get_html_source(self):
+        # pyqt5 webengine has the final html including manipulation from javascript, etc
+        # for scraping with scrapy the first one matters, so will get again
+        # in future = look for way to grab initial html response from pyqt5
+        response = requests.get(self.url)
+        html = response.text
+        soup = BeautifulSoup(html, 'html.parser')
+        html_out = soup.prettify()
+        return html_out
 
 
 class QueryEntry(QWidget):
