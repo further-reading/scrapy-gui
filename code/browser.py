@@ -166,6 +166,15 @@ class Queries(BigHandleSplitter):
 
         self.function_section = OptionalQuery(label='Function')
         self.function_section.initUI()
+        self.function_section.query.setPlainText(
+            """# import packages
+
+# must have 'my_fun' function with 'results' as argument and return a list
+
+def my_fun(results):
+  # your code
+  return results"""
+        )
         top.addWidget(self.function_section)
         self.addWidget(top)
 
