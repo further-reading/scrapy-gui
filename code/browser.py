@@ -7,13 +7,14 @@ from PyQt5.QtWidgets import (
     QMainWindow, QGridLayout, QPlainTextEdit,
     QTableWidget, QLabel, QTabWidget, QSplitter,
     QTableWidgetItem, QAbstractScrollArea, QCheckBox,
-    QRadioButton, QMessageBox, QFrame, QVBoxLayout
+    QMessageBox, QFrame, QVBoxLayout
 )
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtCore import QUrl, Qt
 from PyQt5.QtGui import QPixmap, QPainter, QCursor
 from cssselect.xpath import ExpressionError
 from cssselect.parser import SelectorSyntaxError
+import traceback
 
 HOME = 'http://quotes.toscrape.com/'
 
@@ -153,7 +154,7 @@ class Queries(BigHandleSplitter):
         left_bottom_box = QVBoxLayout()
         left_bottom.setLayout(left_bottom_box)
 
-        self.re_section = RegExEntry(label='Regex:')
+        self.re_section = OptionalQuery(label='Regex')
         self.re_section.initUI()
         left_bottom_box.addWidget(self.re_section)
 
@@ -163,8 +164,17 @@ class Queries(BigHandleSplitter):
         left_frame.addWidget(left_bottom)
         top.addWidget(left_frame)
 
-        self.function_section = FunctionEntry(label='Function:')
+        self.function_section = OptionalQuery(label='Function')
         self.function_section.initUI()
+        self.function_section.query.setPlainText(
+            """# import packages
+
+# must have 'my_fun' function with 'results' as argument and return a list
+
+def my_fun(results):
+  # your code
+  return results"""
+        )
         top.addWidget(self.function_section)
         self.addWidget(top)
 
@@ -185,7 +195,7 @@ class Queries(BigHandleSplitter):
                 QMessageBox.information(self, 'No Results', message)
                 return
 
-            use_regex = self.re_section.use_re
+            use_regex = self.re_section.use
             if use_regex:
                 results = self.regex_filter(results)
                 if not results:
@@ -195,7 +205,7 @@ class Queries(BigHandleSplitter):
             else:
                 results = results.getall()
 
-            use_function = self.function_section.use_function
+            use_function = self.function_section.use
             if use_function:
                 results = self.apply_function(results)
                 if not results:
@@ -212,12 +222,13 @@ class Queries(BigHandleSplitter):
         self.results.setRowCount(0)
 
         for index, result in enumerate(results):
-            self.results.insertRow(index)
-            self.results.setItem(
-                index,
-                0,
-                QTableWidgetItem(result),
-            )
+            if result is not None:
+                self.results.insertRow(index)
+                self.results.setItem(
+                    index,
+                    0,
+                    QTableWidgetItem(result),
+                )
         self.results.resizeColumnsToContents()
         self.results.resizeRowsToContents()
 
@@ -245,30 +256,31 @@ class Queries(BigHandleSplitter):
 
     def apply_function(self, results):
         function = self.function_section.get_query()
-        iterate = self.function_section.iterate
-        results_out = []
-        if iterate:
-            function = f'{function}\nresults_out.append(result)'
-            for result in results:
-                # function is a string which contains operations on result variable
-                try:
-                    exec(function)
-                except Exception as ex:
+        if not function:
+            return
+        if 'def user_fun(results):' not in function:
+            message = f'Custom function needs to be named user_fun and have results as argument'
+            QMessageBox.critical(self, 'Function Error', message)
+            raise QueryError
 
-                    message = f'Error running custom function\n\n{type(ex).__name__}: {ex.args}'
-                    QMessageBox.critical(self, 'Function Error', message)
-                    raise QueryError
-        else:
-            # function is a string which contains operations on results
-            function = f'{function}\nresults_out.append(results)'
-            try:
-                exec(function)
-            except Exception as ex:
-                message = f'Error running custom function\n\n{type(ex).__name__}: {ex.args}'
-                QMessageBox.critical(self, 'Function Error', message)
-                raise QueryError
+        with open('user_fun.py', 'w') as file:
+            file.write(function)
+        try:
+            from user_fun import user_fun
+            results = user_fun(results)
+        except Exception as e:
+            message = f'Error running custom function\n\n{type(e).__name__}: {e.args}'
+            message += f'\n\n{traceback.format_exc()}'
+            print('hello')
+            QMessageBox.critical(self, 'Function Error', message)
+            raise QueryError
 
-        return results_out
+        if not isinstance(results, list) and results is not None:
+            message = f'Custom function must return a list or None'
+            QMessageBox.critical(self, 'Function Error', message)
+            raise QueryError
+
+        return results
 
     def update_url(self, url):
         self.url = url
@@ -305,10 +317,10 @@ class QueryEntry(QWidget):
         return self.query.toPlainText()
 
 
-class RegExEntry(QueryEntry):
+class OptionalQuery(QueryEntry):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.use_re = False
+        self.use = False
 
     def initUI(self):
         grid = QGridLayout()
@@ -317,63 +329,18 @@ class RegExEntry(QueryEntry):
         label = QLabel(self.label)
         grid.addWidget(label, 0, 0)
 
-        re_check = QCheckBox('Use RegEx')
-        re_check.setChecked(False)
-        re_check.clicked.connect(self.re_check_click)
-        grid.addWidget(re_check, 0, 1)
+        check = QCheckBox(f'Use {self.label.title()}')
+        check.setChecked(False)
+        check.clicked.connect(self.check_click)
+        grid.addWidget(check, 0, 1)
 
         self.query = QPlainTextEdit()
         grid.addWidget(self.query, 2, 0, 1, 2)
         self.query.setDisabled(True)
 
-    def re_check_click(self):
-        self.use_re = not self.use_re
-        self.query.setDisabled(not self.use_re)
-
-
-class FunctionEntry(QueryEntry):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.use_function = False
-        self.iterate = False
-
-    def initUI(self):
-        grid = QGridLayout()
-        self.setLayout(grid)
-
-        self.query = QPlainTextEdit()
-        self.query.setDisabled(True)
-        grid.addWidget(self.query, 4, 0)
-
-        label = QLabel(self.label)
-        grid.addWidget(label, 0, 0)
-
-        none_button = QRadioButton('None')
-        none_button.clicked.connect(lambda: self.clicked(none_button))
-        grid.addWidget(none_button, 1, 0)
-        none_button.setChecked(True)
-
-        iterate_button = QRadioButton('Iterate')
-        iterate_button.clicked.connect(lambda: self.clicked(iterate_button))
-        grid.addWidget(iterate_button, 2, 0)
-
-        no_iterate_button = QRadioButton("Don't Iterate")
-        no_iterate_button.clicked.connect(lambda: self.clicked(no_iterate_button))
-        grid.addWidget(no_iterate_button, 3, 0)
-
-    def clicked(self, button):
-        text = button.text()
-        if text == 'None':
-            self.use_function = False
-            self.query.setDisabled(True)
-        elif text == 'Iterate':
-            self.iterate = True
-            self.use_function = True
-            self.query.setDisabled(False)
-        elif text == 'Don\'t Iterate':
-            self.iterate = False
-            self.use_function = True
-            self.query.setDisabled(False)
+    def check_click(self):
+        self.use = not self.use
+        self.query.setDisabled(not self.use)
 
 
 if __name__ == '__main__':
