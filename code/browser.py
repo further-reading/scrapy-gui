@@ -7,11 +7,12 @@ from PyQt5.QtWidgets import (
     QMainWindow, QGridLayout, QPlainTextEdit,
     QTableWidget, QLabel, QTabWidget, QSplitter,
     QTableWidgetItem, QAbstractScrollArea, QCheckBox,
-    QRadioButton, QMessageBox, QAbstractButton, QFrame,
-    QVBoxLayout,
+    QRadioButton, QMessageBox, QFrame,
+    QVBoxLayout
 )
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtCore import QUrl, Qt
+from PyQt5.QtGui import QPixmap, QPainter, QCursor
 from cssselect.xpath import ExpressionError
 from cssselect.parser import SelectorSyntaxError
 
@@ -74,11 +75,11 @@ class QtBrowser(QWidget):
         self.web.loadFinished.connect(self.loadFinished)
         self.web.load(QUrl(HOME))
 
-        back_button = QPushButton('Back')
+        back_button = BrowserButton(image=r'images/back.png')
         back_button.clicked.connect(self.web.back)
         grid.addWidget(back_button, 0, 0)
 
-        forward_button = QPushButton('Forward')
+        forward_button = BrowserButton(image=r'images/forward.png')
         forward_button.clicked.connect(self.web.forward)
         grid.addWidget(forward_button, 0, 1)
 
@@ -105,8 +106,19 @@ class QtBrowser(QWidget):
         self.main.update_url(url)
 
 
-class BigHandleSplitter(QSplitter):
+class BrowserButton(QPushButton):
+    def __init__(self, *args, image):
+        super().__init__(*args)
+        self.pixmap = QPixmap(image)
+        self.setCursor(QCursor(Qt.PointingHandCursor))
 
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.drawPixmap(event.rect(), self.pixmap)
+        self.update()
+
+
+class BigHandleSplitter(QSplitter):
     css_sheet = """
     QSplitter::handle {
     background-color: #000
