@@ -5,12 +5,13 @@ from bs4 import BeautifulSoup
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QPushButton, QLineEdit,
     QMainWindow, QGridLayout, QPlainTextEdit,
-    QTableWidget, QLabel, QTabWidget, QVBoxLayout,
+    QTableWidget, QLabel, QTabWidget, QSplitter,
     QTableWidgetItem, QAbstractScrollArea, QCheckBox,
-    QRadioButton, QMessageBox, QAbstractButton,
+    QRadioButton, QMessageBox, QAbstractButton, QFrame,
+    QVBoxLayout,
 )
 from PyQt5.QtWebEngineWidgets import QWebEngineView
-from PyQt5.QtCore import QUrl
+from PyQt5.QtCore import QUrl, Qt
 from cssselect.xpath import ExpressionError
 from cssselect.parser import SelectorSyntaxError
 
@@ -104,41 +105,62 @@ class QtBrowser(QWidget):
         self.main.update_url(url)
 
 
-class Queries(QWidget):
+class BigHandleSplitter(QSplitter):
+
+    css_sheet = """
+    QSplitter::handle {
+    background-color: #000
+    ;}
+    """
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.setHandleWidth(1)
+        self.setStyleSheet(self.css_sheet)
+
+class Queries(BigHandleSplitter):
     url = None
     html = None
     use_re = False
 
-    def __init__(self, *args, main, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, *args, main):
+        super().__init__(*args)
         self.main = main
         self.initUI()
 
     def initUI(self):
-        grid = QGridLayout()
-        self.setLayout(grid)
+        self.setOrientation(Qt.Vertical)
+        top = BigHandleSplitter(Qt.Horizontal)
+        left_frame = BigHandleSplitter(Qt.Vertical)
 
         self.css_section = QueryEntry(label='CSS Query:')
         self.css_section.initUI()
-        grid.addWidget(self.css_section, 0, 0)
+        left_frame.addWidget(self.css_section)
+
+        left_bottom = QFrame()
+        left_bottom_box = QVBoxLayout()
+        left_bottom.setLayout(left_bottom_box)
 
         self.re_section = RegExEntry(label='Regex:')
         self.re_section.initUI()
-        grid.addWidget(self.re_section, 1, 0)
-
-        self.function_section = FunctionEntry(label='Function:')
-        self.function_section.initUI()
-        grid.addWidget(self.function_section, 0, 1, 2, 1)
+        left_bottom_box.addWidget(self.re_section)
 
         run_button = QPushButton('Run Query')
         run_button.clicked.connect(self.do_query)
-        grid.addWidget(run_button, 2, 0)
+        left_bottom_box.addWidget(run_button)
+        left_frame.addWidget(left_bottom)
+        top.addWidget(left_frame)
+
+        self.function_section = FunctionEntry(label='Function:')
+        self.function_section.initUI()
+        top.addWidget(self.function_section)
+        self.addWidget(top)
 
         self.results = QTableWidget()
         self.results.setSizeAdjustPolicy(
             QAbstractScrollArea.AdjustToContents,
         )
-        grid.addWidget(self.results, 3, 0, 1, 2)
+        self.addWidget(self.results)
 
     def do_query(self):
         if self.html is None:
