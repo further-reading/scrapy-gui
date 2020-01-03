@@ -349,7 +349,8 @@ class ResultsWidget(QWidget):
         self.table.setSizeAdjustPolicy(
             QAbstractScrollArea.AdjustToContents,
         )
-        self.table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+
+        self.table.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
         self.table.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
         grid.addWidget(self.table, 1, 0)
 
