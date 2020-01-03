@@ -2,16 +2,10 @@ import sys
 import requests
 from parsel import Selector
 from bs4 import BeautifulSoup
-from PyQt5.QtWidgets import (
-    QApplication, QWidget, QPushButton, QLineEdit,
-    QMainWindow, QGridLayout, QPlainTextEdit,
-    QTableWidget, QLabel, QTabWidget, QSplitter,
-    QTableWidgetItem, QAbstractScrollArea, QCheckBox,
-    QMessageBox, QFrame, QVBoxLayout
-)
+from PyQt5.QtWidgets import *
 from PyQt5.QtWebEngineWidgets import QWebEngineView
-from PyQt5.QtCore import QUrl, Qt
-from PyQt5.QtGui import QPixmap, QPainter, QCursor
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
 from cssselect.xpath import ExpressionError
 from cssselect.parser import SelectorSyntaxError
 import traceback
@@ -61,18 +55,19 @@ class QtBrowser(QWidget):
         grid = QGridLayout()
         self.setLayout(grid)
 
-        go_button = QPushButton('Go')
-        go_button.clicked.connect(self.go_to_page)
-        grid.addWidget(go_button, 0, 3)
+        self.go_button = QPushButton('Go')
+        self.go_button.clicked.connect(self.go_to_page)
+        grid.addWidget(self.go_button, 0, 3)
 
         self.entry_box = QLineEdit()
-        self.entry_box.returnPressed.connect(go_button.click)
+        self.entry_box.returnPressed.connect(self.go_button.click)
         grid.addWidget(self.entry_box, 0, 2)
 
         self.web = QWebEngineView()
-        grid.addWidget(self.web, 1, 0, 1, 4)
+        grid.addWidget(self.web, 1, 0, 1, 5)
         self.web.urlChanged.connect(self.update_url)
-        self.web.loadFinished.connect(self.loadFinished)
+        self.web.loadStarted.connect(self.load_started)
+        self.web.loadFinished.connect(self.load_finished)
         self.web.load(QUrl(HOME))
 
         back_button = BrowserButton(image=r'images/back.png')
@@ -82,6 +77,14 @@ class QtBrowser(QWidget):
         forward_button = BrowserButton(image=r'images/forward.png')
         forward_button.clicked.connect(self.web.forward)
         grid.addWidget(forward_button, 0, 1)
+
+        self.movie = MovieScreen(
+            movie_file=r'images/loader.gif',
+            end_file=r'images/empty.png',
+        )
+        self.movie.setMaximumHeight(20)
+        self.movie.setMaximumWidth(20)
+        grid.addWidget(self.movie, 0, 4)
 
     def go_to_page(self):
         entered_page = self.entry_box.text()
@@ -101,9 +104,15 @@ class QtBrowser(QWidget):
         url = qurl.url()
         return url
 
-    def loadFinished(self):
+    def load_started(self):
+        self.go_button.setDisabled(True)
+        self.movie.start()
+
+    def load_finished(self):
         url = self.get_url()
+        self.movie.stop()
         self.main.update_url(url)
+        self.go_button.setEnabled(True)
 
 
 class BrowserButton(QPushButton):
@@ -178,10 +187,7 @@ def user_fun(results):
         top.addWidget(self.function_section)
         self.addWidget(top)
 
-        self.results = QTableWidget()
-        self.results.setSizeAdjustPolicy(
-            QAbstractScrollArea.AdjustToContents,
-        )
+        self.results = ResultsWidget()
         self.addWidget(self.results)
 
     def do_query(self):
@@ -217,20 +223,7 @@ def user_fun(results):
             # messaging handled in each method, so just end method
             return
 
-        self.results.clearContents()
-        self.results.setColumnCount(1)
-        self.results.setRowCount(0)
-
-        for index, result in enumerate(results):
-            if result is not None:
-                self.results.insertRow(index)
-                self.results.setItem(
-                    index,
-                    0,
-                    QTableWidgetItem(result),
-                )
-        self.results.resizeColumnsToContents()
-        self.results.resizeRowsToContents()
+        self.results.add_results(results)
 
     def get_results(self):
         query = self.css_section.get_query()
@@ -259,12 +252,12 @@ def user_fun(results):
         if not function:
             return
         if 'def user_fun(results):' not in function:
-            message = f'Custom function needs to be named user_fun and have results as argument'
+            message = f'Custom function needs to be named "user_fun" and have "results" as argument'
             QMessageBox.critical(self, 'Function Error', message)
             raise QueryError
 
-        exec(function, globals())
         try:
+            exec(function, globals())
             results = user_fun(results)
         except Exception as e:
             message = f'Error running custom function\n\n{type(e).__name__}: {e.args}'
@@ -339,6 +332,61 @@ class OptionalQuery(QueryEntry):
         self.use = not self.use
         self.query.setDisabled(not self.use)
 
+
+class ResultsWidget(QWidget):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.initUI()
+
+    def initUI(self):
+        grid = QGridLayout()
+        self.setLayout(grid)
+
+        label = QLabel("Results:")
+        grid.addWidget(label, 0, 0)
+
+        self.table = QTableWidget()
+        self.table.setSizeAdjustPolicy(
+            QAbstractScrollArea.AdjustToContents,
+        )
+
+        self.table.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
+        self.table.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+        grid.addWidget(self.table, 1, 0)
+
+    def add_results(self, results):
+        self.table.clearContents()
+        self.table.setColumnCount(1)
+        self.table.setRowCount(0)
+
+        for index, result in enumerate(results):
+            if result is not None:
+                self.table.insertRow(index)
+                self.table.setItem(
+                    index,
+                    0,
+                    QTableWidgetItem(str(result)),
+                )
+        self.table.resizeColumnsToContents()
+        self.table.resizeRowsToContents()
+
+
+class MovieScreen(QLabel):
+    def __init__(self, *args, movie_file, end_file):
+        super().__init__(*args)
+        self.movie = QMovie(movie_file, QByteArray(), self)
+        self.end = QMovie(end_file, QByteArray(), self)
+        self.movie.setScaledSize(QSize(20, 20))
+        self.end.setScaledSize(QSize(20, 20))
+        self.setMovie(self.movie)
+
+    def start(self):
+        self.setMovie(self.movie)
+        self.movie.start()
+
+    def stop(self):
+        self.movie.stop()
+        self.setMovie(self.end)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
