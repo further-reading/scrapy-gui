@@ -190,8 +190,16 @@ def user_fun(results):
             return
         parser = Parser(self.html)
         css = self.css_section.get_query()
-        regex = self.re_section.get_query()
-        function = self.function_section.get_query()
+
+        if self.re_section.use:
+            regex = self.re_section.get_query()
+        else:
+            regex = None
+        if self.function_section.use:
+            function = self.function_section.get_query()
+        else:
+            function = None
+
         try:
             results = parser.do_query(css, regex, function)
         except errors.QueryError as e:
