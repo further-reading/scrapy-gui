@@ -10,6 +10,8 @@ from cssselect.xpath import ExpressionError
 from cssselect.parser import SelectorSyntaxError
 import traceback
 
+from text_processor import EnhancedTextViewer
+
 HOME = 'http://quotes.toscrape.com/'
 
 
@@ -27,11 +29,12 @@ class Main(QMainWindow):
         tabs = QTabWidget()
         self.browser = QtBrowser(main=self)
         self.queries = Queries(main=self)
-        self.source = QPlainTextEdit()
-        self.source.setReadOnly(True)
+        self.source = EnhancedTextViewer()
+        self.notes = QPlainTextEdit()
         tabs.addTab(self.browser, 'Browser')
         tabs.addTab(self.queries, 'Tools')
         tabs.addTab(self.source, 'Source')
+        tabs.addTab(self.notes, 'Notes')
         self.setCentralWidget(tabs)
         self.show()
 
@@ -39,9 +42,7 @@ class Main(QMainWindow):
         self.queries.update_url(url)
 
     def update_source(self, text):
-        self.source.setReadOnly(False)
         self.source.setPlainText(text)
-        self.source.setReadOnly(True)
 
 
 class QtBrowser(QWidget):
