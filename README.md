@@ -5,11 +5,15 @@ A simple, Qt-Webengine powered web browser with built in functionality for basic
 ## Browser Tab
 Enter any url into search bar and hit return or press the Go button. When the loading animation finishes it will be ready to parse in the Tools tab.
 
+![Browser tab](readme_images/browser.png "Browser Example")
+
 ## Tools Tab
 The tools tab contains various sections for parsing content of the page. The purpose of this tab is to make it easy to test queries and code for use in a scrapy spider.
 > **NOTE:** This will use the **initial** html response. If additional requests, javascript, etc alter the page later this will not be taken into account.
 
 It will load the initial html with an additional request using the `requests` package. When running a query it will create a selector object using `Selection` from the parsel package.
+
+![Tools tab](readme_images/tools.png "Tools Example")
 
 ### Query Box
 The query box lets you use [parsel](https://github.com/scrapy/parsel) compatible CSS queries to extract data from the page.
@@ -35,6 +39,8 @@ This table will list all the results, passed through the regex and function if d
 ## Source Tab
 
 This tab contains the html source that is used in the Tools tab. You can use the text box to search for specific content.
+
+![Source Tab](readme_images/source.png "Source Example")
 
 ## Notes Tab
 
