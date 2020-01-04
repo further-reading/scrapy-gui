@@ -244,6 +244,7 @@ class QueryEntry(QWidget):
 
         self.query = QPlainTextEdit()
         grid.addWidget(self.query, 1, 0)
+        self.query.setLineWrapMode(QPlainTextEdit.NoWrap)
 
     def get_query(self):
         return self.query.toPlainText()
@@ -268,6 +269,7 @@ class OptionalQuery(QueryEntry):
 
         self.query = QPlainTextEdit()
         grid.addWidget(self.query, 2, 0, 1, 2)
+        self.query.setLineWrapMode(QPlainTextEdit.NoWrap)
         self.query.setDisabled(True)
 
     def check_click(self):
