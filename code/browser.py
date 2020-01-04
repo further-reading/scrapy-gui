@@ -266,11 +266,6 @@ def user_fun(results):
             QMessageBox.critical(self, 'Function Error', message)
             raise QueryError
 
-        if not isinstance(results, list) and results is not None:
-            message = f'Custom function must return a list or None'
-            QMessageBox.critical(self, 'Function Error', message)
-            raise QueryError
-
         return results
 
     def update_url(self, url):
@@ -370,6 +365,7 @@ class ResultsWidget(QWidget):
                 )
         self.table.resizeColumnsToContents()
         self.table.resizeRowsToContents()
+        del results
 
 
 class MovieScreen(QLabel):
@@ -388,6 +384,7 @@ class MovieScreen(QLabel):
     def stop(self):
         self.movie.stop()
         self.setMovie(self.end)
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
