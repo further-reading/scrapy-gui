@@ -1,22 +1,16 @@
 import sys
 import requests
-from parsel import Selector
 from bs4 import BeautifulSoup
 from PyQt5.QtWidgets import *
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-from cssselect.xpath import ExpressionError
-from cssselect.parser import SelectorSyntaxError
-import traceback
+import errors
 
 from text_processor import EnhancedTextViewer
+from parser import Parser
 
 HOME = 'http://quotes.toscrape.com/'
-
-
-class QueryError(Exception):
-    pass
 
 
 class Main(QMainWindow):
@@ -194,84 +188,31 @@ def user_fun(results):
     def do_query(self):
         if self.html is None:
             return
+        parser = Parser(self.html)
+        css = self.css_section.get_query()
+
+        if self.re_section.use:
+            regex = self.re_section.get_query()
+        else:
+            regex = None
+        if self.function_section.use:
+            function = self.function_section.get_query()
+        else:
+            function = None
+
         try:
-            results = self.get_results()
-
-            if not results:
-                message = f'No results found for css query'
-                QMessageBox.information(self, 'No Results', message)
-                return
-
-            use_regex = self.re_section.use
-            if use_regex:
-                results = self.regex_filter(results)
-                if not results:
-                    message = f'No results found for regex filter'
-                    QMessageBox.information(self, 'No Results', message)
-                    return
-            else:
-                results = results.getall()
-
-            use_function = self.function_section.use
-            if use_function:
-                results = self.apply_function(results)
-                if not results:
-                    message = f'No results found for custom function'
-                    QMessageBox.information(self, 'No Function Results', message)
-                    return
-        except QueryError:
-            # error occured on a step
-            # messaging handled in each method, so just end method
+            results = parser.do_query(css, regex, function)
+        except errors.QueryError as e:
+            errors.show_error_dialog(
+                self,
+                e.title,
+                e.message,
+                e.error_type,
+            )
             return
 
         self.results.add_results(results)
 
-    def get_results(self):
-        query = self.css_section.get_query()
-        sel = Selector(text=self.html)
-        try:
-            results = sel.css(query)
-        except (ExpressionError, SelectorSyntaxError) as e:
-            message = f'Error parsing css query\n\n{e}'
-            QMessageBox.critical(self, 'CSS Error', message)
-            raise QueryError
-
-        return results
-
-    def regex_filter(self, results):
-        regex = self.re_section.get_query()
-        try:
-            results = results.re(regex)
-        except Exception as e:
-            message = f'Error running regex\n\n{e}'
-            QMessageBox.critical(self, 'RegEx Error', message)
-            raise QueryError
-        return results
-
-    def apply_function(self, results):
-        function = self.function_section.get_query()
-        if not function:
-            return
-        if 'def user_fun(results):' not in function:
-            message = f'Custom function needs to be named "user_fun" and have "results" as argument'
-            QMessageBox.critical(self, 'Function Error', message)
-            raise QueryError
-
-        try:
-            exec(function, globals())
-            results = user_fun(results)
-        except Exception as e:
-            message = f'Error running custom function\n\n{type(e).__name__}: {e.args}'
-            message += f'\n\n{traceback.format_exc()}'
-            QMessageBox.critical(self, 'Function Error', message)
-            raise QueryError
-
-        if not isinstance(results, list) and results is not None:
-            message = f'Custom function must return a list or None'
-            QMessageBox.critical(self, 'Function Error', message)
-            raise QueryError
-
-        return results
 
     def update_url(self, url):
         self.url = url
@@ -370,6 +311,7 @@ class ResultsWidget(QWidget):
                 )
         self.table.resizeColumnsToContents()
         self.table.resizeRowsToContents()
+        del results
 
 
 class MovieScreen(QLabel):
@@ -388,6 +330,7 @@ class MovieScreen(QLabel):
     def stop(self):
         self.movie.stop()
         self.setMovie(self.end)
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
