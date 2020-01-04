@@ -1,8 +1,7 @@
 from PyQt5.QtWidgets import QMessageBox
 
 ERROR_TYPES = {
-    'info': QMessageBox.Information,
-    'warning': QMessageBox.Warning,
+    'info': QMessageBox.information,
     'critical': QMessageBox.critical,
 }
 
