@@ -9,14 +9,11 @@ from PyQt5.QtGui import *
 from cssselect.xpath import ExpressionError
 from cssselect.parser import SelectorSyntaxError
 import traceback
+import errors
 
 from text_processor import EnhancedTextViewer
 
 HOME = 'http://quotes.toscrape.com/'
-
-
-class QueryError(Exception):
-    pass
 
 
 class Main(QMainWindow):
@@ -199,7 +196,7 @@ def user_fun(results):
 
             if not results:
                 message = f'No results found for css query'
-                QMessageBox.information(self, 'No Results', message)
+                errors.show_error_dialog(self, 'No Results', message, 'info')
                 return
 
             use_regex = self.re_section.use
@@ -207,7 +204,7 @@ def user_fun(results):
                 results = self.regex_filter(results)
                 if not results:
                     message = f'No results found for regex filter'
-                    QMessageBox.information(self, 'No Results', message)
+                    errors.show_error_dialog(self, 'No Results', message, 'info')
                     return
             else:
                 results = results.getall()
@@ -217,11 +214,10 @@ def user_fun(results):
                 results = self.apply_function(results)
                 if not results:
                     message = f'No results found for custom function'
-                    QMessageBox.information(self, 'No Function Results', message)
+                    errors.show_error_dialog(self, 'No Results', message, 'info')
                     return
-        except QueryError:
-            # error occured on a step
-            # messaging handled in each method, so just end method
+        except errors.QueryError as e:
+            errors.show_error_dialog(self, e.title, e.message, e.error_type)
             return
 
         self.results.add_results(results)
@@ -233,8 +229,11 @@ def user_fun(results):
             results = sel.css(query)
         except (ExpressionError, SelectorSyntaxError) as e:
             message = f'Error parsing css query\n\n{e}'
-            QMessageBox.critical(self, 'CSS Error', message)
-            raise QueryError
+            raise errors.QueryError(
+                title='CSS Error',
+                message=message,
+                error_type='critical',
+            )
 
         return results
 
@@ -244,8 +243,11 @@ def user_fun(results):
             results = results.re(regex)
         except Exception as e:
             message = f'Error running regex\n\n{e}'
-            QMessageBox.critical(self, 'RegEx Error', message)
-            raise QueryError
+            raise errors.QueryError(
+                title='RegEx Error',
+                message=message,
+                error_type='critical',
+            )
         return results
 
     def apply_function(self, results):
@@ -254,8 +256,11 @@ def user_fun(results):
             return
         if 'def user_fun(results):' not in function:
             message = f'Custom function needs to be named "user_fun" and have "results" as argument'
-            QMessageBox.critical(self, 'Function Error', message)
-            raise QueryError
+            raise errors.QueryError(
+                title='Function Error',
+                message=message,
+                error_type='critical',
+            )
 
         try:
             exec(function, globals())
@@ -263,8 +268,11 @@ def user_fun(results):
         except Exception as e:
             message = f'Error running custom function\n\n{type(e).__name__}: {e.args}'
             message += f'\n\n{traceback.format_exc()}'
-            QMessageBox.critical(self, 'Function Error', message)
-            raise QueryError
+            raise errors.QueryError(
+                title='Function Error',
+                message=message,
+                error_type='critical',
+            )
 
         return results
 
