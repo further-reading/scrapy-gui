@@ -28,7 +28,7 @@ This box lets you add a regular expression pattern to be used in addition to the
 It returns results as though `selection.css('YOUR QUERY').re(r'YOUR REGEX')'` was called. This means that if you use groups it will only return the content within parenthesis.
 
 ### Function Box
-This box lets you define additional python code that can run on the results of your query and regex. The code can be as long and complex as you want, including adding additional functions, classes etc.
+This box lets you define additional python code that can run on the results of your query and regex. The code can be as long and complex as you want, including adding additional functions, classes, imports etc.
 
 The only requirement is you must include a function called `user_fun(results)` that returns a `list`. 
 
