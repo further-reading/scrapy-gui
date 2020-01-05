@@ -38,7 +38,7 @@ This table will list all the results, passed through the regex and function if d
 
 ## Source Tab
 
-This tab contains the html source that is used in the Tools tab. You can use the text box to search for specific content.
+This tab contains the html source that is used in the Tools tab. You can use the text box to search for specific content. All searches are not case sensitive.
 
 ![Source Tab](readme_images/source.png "Source Example")
 
