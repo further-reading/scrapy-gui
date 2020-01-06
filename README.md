@@ -1,6 +1,25 @@
 # Scraping Browser
 A simple, Qt-Webengine powered web browser with built in functionality for basic scrapy webscraping support.
 
+
+**Table of Contents**
+
+- [Standalone UI](#Standalone UI)
+    - [Browser Tab](#Browser Tab)
+    - [Tools Tab](#Tools Tab)
+        - [Query Box](#Query Box)
+        - [Regex Box](#Regex Box)
+        - [Function Box](#Function Box)
+        - [Results Box](#Results Box)
+    - [Source Tab](#Source Tab)
+    - [Notes Tab](#Notes Tab)
+- [Integration with Scrapy Shell](#Integration with Scrapy Shell)
+    - [Installation](#Installation)
+    - [Activation](#Activation)
+
+# Standalone UI
+The standlaone UI can be run using the `main.py` file in the code folder.
+
 ## Browser Tab
 Enter any url into search bar and hit return or press the Go button. When the loading animation finishes it will be ready to parse in the Tools tab.
 
