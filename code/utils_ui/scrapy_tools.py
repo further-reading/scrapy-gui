@@ -1,125 +1,12 @@
-import sys
-import requests
-from bs4 import BeautifulSoup
 from PyQt5.QtWidgets import *
-from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-import errors
+from bs4 import BeautifulSoup
 
-from text_processor import EnhancedTextViewer
-from parser import Parser
+from .text_processor import EnhancedTextViewer
+from .parser import Parser
+from . import errors
 
-HOME = 'http://quotes.toscrape.com/'
-
-
-class Main(QMainWindow):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.init_ui()
-
-    def init_ui(self):
-        self.setWindowTitle('Browser')
-        tabs = QTabWidget()
-        self.browser = QtBrowser(main=self)
-        self.queries = Queries(main=self)
-        self.source = EnhancedTextViewer()
-        self.notes = QPlainTextEdit()
-        tabs.addTab(self.browser, 'Browser')
-        tabs.addTab(self.queries, 'Tools')
-        tabs.addTab(self.source, 'Source')
-        tabs.addTab(self.notes, 'Notes')
-        self.setCentralWidget(tabs)
-        self.show()
-
-    def update_url(self, url):
-        self.queries.update_url(url)
-
-    def update_source(self, text):
-        self.source.setPlainText(text)
-
-
-class QtBrowser(QWidget):
-    def __init__(self, *args, main, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.main = main
-        self.html = None
-        self.init_ui()
-
-    def init_ui(self):
-        grid = QGridLayout()
-        self.setLayout(grid)
-
-        self.go_button = QPushButton('Go')
-        self.go_button.clicked.connect(self.go_to_page)
-        grid.addWidget(self.go_button, 0, 3)
-
-        self.entry_box = QLineEdit()
-        self.entry_box.returnPressed.connect(self.go_button.click)
-        grid.addWidget(self.entry_box, 0, 2)
-
-        self.web = QWebEngineView()
-        grid.addWidget(self.web, 1, 0, 1, 5)
-        self.web.urlChanged.connect(self.update_url)
-        self.web.loadStarted.connect(self.load_started)
-        self.web.loadFinished.connect(self.load_finished)
-        self.web.load(QUrl(HOME))
-
-        back_button = BrowserButton(image=r'images/back.png')
-        back_button.clicked.connect(self.web.back)
-        grid.addWidget(back_button, 0, 0)
-
-        forward_button = BrowserButton(image=r'images/forward.png')
-        forward_button.clicked.connect(self.web.forward)
-        grid.addWidget(forward_button, 0, 1)
-
-        self.movie = MovieScreen(
-            movie_file=r'images/loader.gif',
-            end_file=r'images/empty.png',
-        )
-        self.movie.setMaximumHeight(20)
-        self.movie.setMaximumWidth(20)
-        grid.addWidget(self.movie, 0, 4)
-
-    def go_to_page(self):
-        entered_page = self.entry_box.text()
-        if not entered_page.startswith('http'):
-            entered_page = f'https://{entered_page}'
-        elif not entered_page.startswith('https'):
-            entered_page = entered_page.replace('http', 'https', 1)
-
-        self.web.load(QUrl(entered_page))
-
-    def update_url(self):
-        url = self.get_url()
-        self.entry_box.setText(url)
-
-    def get_url(self):
-        qurl = self.web.url()
-        url = qurl.url()
-        return url
-
-    def load_started(self):
-        self.go_button.setDisabled(True)
-        self.movie.start()
-
-    def load_finished(self):
-        url = self.get_url()
-        self.movie.stop()
-        self.main.update_url(url)
-        self.go_button.setEnabled(True)
-
-
-class BrowserButton(QPushButton):
-    def __init__(self, *args, image):
-        super().__init__(*args)
-        self.pixmap = QPixmap(image)
-        self.setCursor(QCursor(Qt.PointingHandCursor))
-
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.drawPixmap(event.rect(), self.pixmap)
-        self.update()
+import sys
 
 
 class BigHandleSplitter(QSplitter):
@@ -173,9 +60,9 @@ class Queries(BigHandleSplitter):
         self.function_section.query.setPlainText(
             """# import packages
 
-# must have 'user_fun' function with 'results' as argument and return a list
+# must have 'user_fun' function with\n'results' and 'selector' as arguments\nand return a list
 
-def user_fun(results):
+def user_fun(results, selector):
   # your code
   return results"""
         )
@@ -213,21 +100,8 @@ def user_fun(results):
 
         self.results.add_results(results)
 
-
-    def update_url(self, url):
-        self.url = url
-        self.html = self.get_html_source()
-        self.main.update_source(self.html)
-
-    def get_html_source(self):
-        # pyqt5 webengine has the final html including manipulation from javascript, etc
-        # for scraping with scrapy the first one matters, so will get again
-        # in future = look for way to grab initial html response from pyqt5
-        response = requests.get(self.url)
-        html = response.text
-        soup = BeautifulSoup(html, 'html.parser')
-        html_out = soup.prettify()
-        return html_out
+    def update_source(self, text):
+        self.html = text
 
 
 class QueryEntry(QWidget):
@@ -316,25 +190,33 @@ class ResultsWidget(QWidget):
         del results
 
 
-class MovieScreen(QLabel):
-    def __init__(self, *args, movie_file, end_file):
-        super().__init__(*args)
-        self.movie = QMovie(movie_file, QByteArray(), self)
-        self.end = QMovie(end_file, QByteArray(), self)
-        self.movie.setScaledSize(QSize(20, 20))
-        self.end.setScaledSize(QSize(20, 20))
-        self.setMovie(self.movie)
+class MiniUI(QMainWindow):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.init_ui()
 
-    def start(self):
-        self.setMovie(self.movie)
-        self.movie.start()
+    def init_ui(self):
+        self.setWindowTitle('Shell UI')
+        tabs = QTabWidget()
+        self.queries = Queries(main=self)
+        self.source = EnhancedTextViewer()
+        self.notes = QPlainTextEdit()
+        tabs.addTab(self.queries, 'Tools')
+        tabs.addTab(self.source, 'Source')
+        tabs.addTab(self.notes, 'Notes')
+        self.setCentralWidget(tabs)
 
-    def stop(self):
-        self.movie.stop()
-        self.setMovie(self.end)
+    def add_selector(self, response):
+        self.queries.update_source(response)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        html_out = soup.prettify()
+        self.source.setPlainText(html_out)
 
 
-if __name__ == '__main__':
+def load_selector(selector):
+    print('Shell UI window opened - Close window to regain use of shell')
     app = QApplication(sys.argv)
-    main = Main()
-    sys.exit(app.exec_())
+    main = MiniUI()
+    main.add_selector(selector)
+    main.show()
+    app.exec_()

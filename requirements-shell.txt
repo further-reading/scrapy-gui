@@ -1,0 +1,4 @@
+parsel==1.5.2
+cssselect==1.1.0
+beautifulsoup4==4.8.2
+PyQt5==5.14.0
