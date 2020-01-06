@@ -2,7 +2,7 @@ from parsel import Selector
 from cssselect.xpath import ExpressionError
 from cssselect.parser import SelectorSyntaxError
 import traceback
-import errors
+from utils_ui import errors
 
 
 class Parser:
