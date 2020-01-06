@@ -4,18 +4,18 @@ A simple, Qt-Webengine powered web browser with built in functionality for basic
 
 **Table of Contents**
 
-- [Standalone UI](#Standalone UI)
-    - [Browser Tab](#Browser Tab)
-    - [Tools Tab](#Tools Tab)
-        - [Query Box](#Query Box)
-        - [Regex Box](#Regex Box)
-        - [Function Box](#Function Box)
-        - [Results Box](#Results Box)
-    - [Source Tab](#Source Tab)
-    - [Notes Tab](#Notes Tab)
-- [Integration with Scrapy Shell](#Integration with Scrapy Shell)
-    - [Installation](#Installation)
-    - [Activation](#Activation)
+- [Standalone UI](#standalone-ui)
+    - [Browser Tab](#browser-tab)
+    - [Tools Tab](#tools-tab)
+        - [Query Box](#query-box)
+        - [Regex Box](#regex-box)
+        - [Function Box](#function-box)
+        - [Results Box](#results-box)
+    - [Source Tab](#source-tab)
+    - [Notes Tab](#notes-tab)
+- [Integration with Scrapy Shell](#integration-with-scrapy-shell)
+    - [Installation](#installation)
+    - [Activation](#activation)
 
 # Standalone UI
 The standlaone UI can be run using the `main.py` file in the code folder.
