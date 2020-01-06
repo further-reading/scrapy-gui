@@ -189,6 +189,7 @@ class ResultsWidget(QWidget):
         self.table.resizeRowsToContents()
         del results
 
+
 class MiniUI(QMainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
