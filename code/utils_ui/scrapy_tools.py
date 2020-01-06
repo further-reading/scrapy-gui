@@ -88,7 +88,7 @@ def user_fun(results, selector):
             function = None
 
         try:
-            results = parser.do_query(css, regex, function)
+            results = parser.do_query(css, parser.selector, regex, function)
         except errors.QueryError as e:
             errors.show_error_dialog(
                 self,
