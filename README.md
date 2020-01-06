@@ -1,5 +1,7 @@
 # Scraping Browser
-A simple, Qt-Webengine powered web browser with built in functionality for basic scrapy webscraping support.
+A simple, Qt-Webengine powered web browser with built in functionality for simple scrapy webscraping support.
+
+Also includes an addon to enable a GUI for use with the scrapy shell.
 
 
 **Table of Contents**
