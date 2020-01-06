@@ -1,7 +1,7 @@
 Requires Python 3.6+
 
 # Scraping Browser
-A simple, Qt-Webengine powered web browser with built in functionality for simple scrapy webscraping support.
+A simple, Qt-Webengine powered web browser with built in functionality for testing scrapy spider code.
 
 Also includes an addon to enable a GUI for use with the scrapy shell.
 
@@ -22,7 +22,7 @@ Also includes an addon to enable a GUI for use with the scrapy shell.
     - [Activation](#activation)
 
 # Standalone UI
-The standlaone UI can be run using the `main.py` file in the code folder.
+The standlaone UI can be run using the `main.py` file in the code folder. It consists of a simple web browser and various tabs for testing scrapy compatible code.
 
 ## Browser Tab
 Enter any url into search bar and hit return or press the Go button. When the loading animation finishes it will be ready to parse in the Tools tab.
