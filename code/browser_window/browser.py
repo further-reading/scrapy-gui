@@ -32,17 +32,17 @@ class QtBrowser(QWidget):
         self.web.loadFinished.connect(self.load_finished)
         self.web.load(QUrl(HOME))
 
-        back_button = BrowserButton(image=r'utils_ui/images/back.png')
+        back_button = BrowserButton(image=r'browser_window/images/back.png')
         back_button.clicked.connect(self.web.back)
         grid.addWidget(back_button, 0, 0)
 
-        forward_button = BrowserButton(image=r'utils_ui/images/forward.png')
+        forward_button = BrowserButton(image=r'browser_window/images/forward.png')
         forward_button.clicked.connect(self.web.forward)
         grid.addWidget(forward_button, 0, 1)
 
         self.movie = MovieScreen(
-            movie_file=r'utils_ui/images/loader.gif',
-            end_file=r'utils_ui/images/empty.png',
+            movie_file=r'browser_window/images/loader.gif',
+            end_file=r'browser_window/images/empty.png',
         )
         self.movie.setMaximumHeight(20)
         self.movie.setMaximumWidth(20)

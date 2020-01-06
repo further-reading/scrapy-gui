@@ -1,15 +1,14 @@
-from parsel import Selector
 from cssselect.xpath import ExpressionError
 from cssselect.parser import SelectorSyntaxError
 import traceback
-from utils_ui import errors
+from . import errors
 
 
 class Parser:
-    def __init__(self, html):
-        self.selector = Selector(text=html)
+    def __init__(self, selector):
+        self.selector = selector
 
-    def do_query(self, css, regex=None, function=None):
+    def do_query(self, css, selector, regex=None, function=None):
         try:
             results = self.selector.css(css)
         except (ExpressionError, SelectorSyntaxError) as e:
@@ -46,7 +45,7 @@ class Parser:
             results = results.getall()
 
         if function:
-            results = self.use_custom_function(results, function)
+            results = self.use_custom_function(results, function, selector)
             if not results:
                 raise errors.QueryError(
                     title='Function Empty',
@@ -55,9 +54,9 @@ class Parser:
                 )
         return results
 
-    def use_custom_function(self, results, function):
-        if 'def user_fun(results):' not in function:
-            message = f'Custom function needs to be named "user_fun" and have "results" as argument'
+    def use_custom_function(self, results, function, selector):
+        if 'def user_fun(results, selector):' not in function:
+            message = f'Custom function needs to be named "user_fun" and have "results" and "selector" as arguments'
             raise errors.QueryError(
                 title='Function Error',
                 message=message,
@@ -66,7 +65,7 @@ class Parser:
 
         try:
             exec(function, globals())
-            results = user_fun(results)
+            results = user_fun(results, selector)
         except Exception as e:
             message = f'Error running custom function\n\n{type(e).__name__}: {e.args}'
             message += f'\n\n{traceback.format_exc()}'

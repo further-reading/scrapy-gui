@@ -1,10 +1,10 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
-from utils_ui.text_processor import EnhancedTextViewer
 from bs4 import BeautifulSoup
 
-from utils_ui.parser import Parser
-from utils_ui import errors
+from .text_processor import EnhancedTextViewer
+from .parser import Parser
+from . import errors
 
 import sys
 
@@ -60,9 +60,9 @@ class Queries(BigHandleSplitter):
         self.function_section.query.setPlainText(
             """# import packages
 
-# must have 'user_fun' function with 'results' as argument and return a list
+# must have 'user_fun' function with\n'results' and 'selector' as arguments\nand return a list
 
-def user_fun(results):
+def user_fun(results, selector):
   # your code
   return results"""
         )
@@ -196,27 +196,27 @@ class MiniUI(QMainWindow):
         self.init_ui()
 
     def init_ui(self):
-        self.setWindowTitle('Browser')
+        self.setWindowTitle('Shell UI')
         tabs = QTabWidget()
         self.queries = Queries(main=self)
         self.source = EnhancedTextViewer()
         self.notes = QPlainTextEdit()
-        tabs.addTab(self.browser, 'Browser')
         tabs.addTab(self.queries, 'Tools')
         tabs.addTab(self.source, 'Source')
         tabs.addTab(self.notes, 'Notes')
         self.setCentralWidget(tabs)
 
-    def add_response(self, html):
-        self.queries.update_source(html)
-        soup = BeautifulSoup(html, 'html.parser')
+    def add_selector(self, response):
+        self.queries.update_source(response)
+        soup = BeautifulSoup(response.text, 'html.parser')
         html_out = soup.prettify()
         self.source.setPlainText(html_out)
 
 
-def load_response(response):
+def load_selector(selector):
+    print('Shell UI window opened - Close window to regain use of shell')
     app = QApplication(sys.argv)
     main = MiniUI()
-    main.add_response(response.text)
+    main.add_selector(selector)
     main.show()
-    sys.exit(app.exec_())
+    app.exec_()

@@ -1,10 +1,11 @@
 from PyQt5.QtWidgets import *
 
 from bs4 import BeautifulSoup
+from parsel import Selector
 import requests
 
 from utils_ui.text_processor import EnhancedTextViewer
-from utils_ui.browser import QtBrowser
+from browser_window.browser import QtBrowser
 from utils_ui.scrapy_tools import Queries
 import sys
 
@@ -34,7 +35,8 @@ class Main(QMainWindow):
         # in future = look for way to grab initial html response from pyqt5
         response = requests.get(url)
         html = response.text
-        self.queries.update_source(html)
+        selector = Selector(text=html)
+        self.queries.update_source(selector)
         soup = BeautifulSoup(html, 'html.parser')
         html_out = soup.prettify()
         self.source.setPlainText(html_out)
