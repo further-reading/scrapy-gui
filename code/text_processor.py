@@ -96,6 +96,8 @@ class EnhancedTextViewer(QWidget):
         self.update_position()
 
     def update_position(self):
+        if not self.indexes:
+            return
         index = self.indexes[self.current_index - 1]
         cursor = self.make_cursor(index)
         self.source_text.setTextCursor(cursor)
