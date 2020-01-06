@@ -1,7 +1,6 @@
 # Scraping Browser
 A simple, Qt-Webengine powered web browser with built in functionality for basic scrapy webscraping support.
 
-# Instructions
 ## Browser Tab
 Enter any url into search bar and hit return or press the Go button. When the loading animation finishes it will be ready to parse in the Tools tab.
 
@@ -50,14 +49,14 @@ This is just a plain text box. Content in here is not saved when you exit the ap
 
 It is possible to integrate this tool with the scrapy shell. This will allow you to use it on responses that have been passed through your middlewares, access more complex requests and more specific selectors.
 
-# Installation
+## Installation
 
 The quickest way to integrate it is to follow these steps:
 
 1. Copy the `utils_ui` folder into your project directory.  
 2. Install the requirements in `requirements-shell.txt`
 
-# Activation
+## Activation
 
 To use it in your shell:
 
