@@ -1,3 +1,5 @@
+Requires Python 3.6+
+
 # Scraping Browser
 A simple, Qt-Webengine powered web browser with built in functionality for simple scrapy webscraping support.
 
