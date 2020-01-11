@@ -4,9 +4,9 @@ from bs4 import BeautifulSoup
 from parsel import Selector
 import requests
 
-from utils_ui.text_processor import EnhancedTextViewer
-from browser_window.browser import QtBrowser
-from utils_ui.scrapy_tools import Queries
+from .utils_ui.text_processor import EnhancedTextViewer
+from .browser_window.browser import QtBrowser
+from .utils_ui.scrapy_tools import Queries
 import sys
 
 
@@ -42,7 +42,7 @@ class Main(QMainWindow):
         self.source.setPlainText(html_out)
 
 
-if __name__ == '__main__':
+def open_browser():
     app = QApplication(sys.argv)
     main = Main()
     sys.exit(app.exec_())

@@ -3,6 +3,8 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 
+import os
+
 HOME = 'http://quotes.toscrape.com/'
 
 
@@ -32,17 +34,17 @@ class QtBrowser(QWidget):
         self.web.loadFinished.connect(self.load_finished)
         self.web.load(QUrl(HOME))
 
-        back_button = BrowserButton(image=r'browser_window/images/back.png')
+        back_button = BrowserButton(image=get_path('images/back.png'))
         back_button.clicked.connect(self.web.back)
         grid.addWidget(back_button, 0, 0)
 
-        forward_button = BrowserButton(image=r'browser_window/images/forward.png')
+        forward_button = BrowserButton(image=get_path('images/forward.png'))
         forward_button.clicked.connect(self.web.forward)
         grid.addWidget(forward_button, 0, 1)
 
         self.movie = MovieScreen(
-            movie_file=r'browser_window/images/loader.gif',
-            end_file=r'browser_window/images/empty.png',
+            movie_file=get_path('images/loader.gif'),
+            end_file=get_path('images/empty.png'),
         )
         self.movie.setMaximumHeight(20)
         self.movie.setMaximumWidth(20)
@@ -106,3 +108,9 @@ class MovieScreen(QLabel):
         self.movie.stop()
         self.setMovie(self.end)
 
+
+def get_path(relative_path):
+    dirname = os.path.dirname(__file__)
+    print(dirname)
+    full_path = os.path.join(dirname, relative_path)
+    return full_path
