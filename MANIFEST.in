@@ -1,2 +1,2 @@
-include readme_images/*
-include browser_window/images/*
+include MANIFEST.in
+recursive-include scrapy_browser/browser_window/images *
