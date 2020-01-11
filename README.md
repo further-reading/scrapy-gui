@@ -25,7 +25,7 @@ Also includes an addon to enable a GUI for use with the scrapy shell.
 
 You can import the package from PyPi using
 
-> pip install scrapy_ui
+> pip install scrapy_gui
 
 Then you can import it to a shell using `scrapy_ui`
 
