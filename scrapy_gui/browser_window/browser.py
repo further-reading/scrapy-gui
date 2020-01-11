@@ -111,6 +111,5 @@ class MovieScreen(QLabel):
 
 def get_path(relative_path):
     dirname = os.path.dirname(__file__)
-    print(dirname)
     full_path = os.path.join(dirname, relative_path)
     return full_path
