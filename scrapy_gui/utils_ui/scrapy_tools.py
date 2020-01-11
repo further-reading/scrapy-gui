@@ -1,12 +1,8 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
-from bs4 import BeautifulSoup
 
-from .text_processor import EnhancedTextViewer
 from .parser import Parser
 from . import errors
-
-import sys
 
 
 class BigHandleSplitter(QSplitter):
@@ -188,35 +184,3 @@ class ResultsWidget(QWidget):
         self.table.resizeColumnsToContents()
         self.table.resizeRowsToContents()
         del results
-
-
-class MiniUI(QMainWindow):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.init_ui()
-
-    def init_ui(self):
-        self.setWindowTitle('Shell UI')
-        tabs = QTabWidget()
-        self.queries = Queries(main=self)
-        self.source = EnhancedTextViewer()
-        self.notes = QPlainTextEdit()
-        tabs.addTab(self.queries, 'Tools')
-        tabs.addTab(self.source, 'Source')
-        tabs.addTab(self.notes, 'Notes')
-        self.setCentralWidget(tabs)
-
-    def add_selector(self, response):
-        self.queries.update_source(response)
-        soup = BeautifulSoup(response.text, 'html.parser')
-        html_out = soup.prettify()
-        self.source.setPlainText(html_out)
-
-
-def load_selector(selector):
-    print('Shell UI window opened - Close window to regain use of shell')
-    app = QApplication(sys.argv)
-    main = MiniUI()
-    main.add_selector(selector)
-    main.show()
-    app.exec_()

@@ -1,0 +1,2 @@
+include MANIFEST.in
+recursive-include scrapy_gui/browser_window/images *
