@@ -1,6 +1,6 @@
 Requires Python 3.6+
 
-# Scraping Browser
+# Scrapy UI
 A simple, Qt-Webengine powered web browser with built in functionality for testing scrapy spider code.
 
 Also includes an addon to enable a GUI for use with the scrapy shell.
@@ -8,6 +8,7 @@ Also includes an addon to enable a GUI for use with the scrapy shell.
 
 **Table of Contents**
 
+- [Installation](#installation)
 - [Standalone UI](#standalone-ui)
     - [Browser Tab](#browser-tab)
     - [Tools Tab](#tools-tab)
@@ -18,11 +19,18 @@ Also includes an addon to enable a GUI for use with the scrapy shell.
     - [Source Tab](#source-tab)
     - [Notes Tab](#notes-tab)
 - [Integration with Scrapy Shell](#integration-with-scrapy-shell)
-    - [Installation](#installation)
     - [Activation](#activation)
 
+# Installation
+
+You can import the package from PyPi using
+
+> pip install scrapy_ui
+
+Then you can import it to a shell using `scrapy_ui`
+
 # Standalone UI
-The standlaone UI can be run using the `main.py` file in the code folder. It consists of a simple web browser and various tabs for testing scrapy compatible code.
+The standlaone UI can be opened by using `from scrapy_ui.open_browser()` from a python shell. This consists of a web browser and a set of tools to analyse its contents.
 
 ## Browser Tab
 Enter any url into search bar and hit return or press the Go button. When the loading animation finishes it will be ready to parse in the Tools tab.
@@ -72,20 +80,14 @@ This is just a plain text box. Content in here is not saved when you exit the ap
 
 It is possible to integrate this tool with the scrapy shell. This will allow you to use it on responses that have been passed through your middlewares, access more complex requests and more specific selectors.
 
-## Installation
-
-The quickest way to integrate it is to follow these steps:
-
-1. Copy the `utils_ui` folder into your project directory.  
-2. Install the requirements in `requirements-shell.txt`
-
 ## Activation
 
-To use it in your shell:
+To use it in your shell import the load_selector method using:
 
-1. Import it into your shell with `from YOUR_PROJECT_DIRECTORY.utils_ui import scrapy_tools`
-2. Use the `scrapy_tools.load_selector` function to open a window with a selector loaded in.
+`from scrapy_ui import load_selector`
 
-> For example `scrapy_tools.load_selector(response)` will load your response into the UI.
+Then you can write load_selector(YOUR_SELECTOR) to open a window with your selector loaded into it.
+
+> For example `load_selector(response)` will load your response into the UI.
 
 When you run the code a window named `Shell UI` will open that contains the `Tools`, `Source` and `Notes` tabs from the standalone window mentioned above.
