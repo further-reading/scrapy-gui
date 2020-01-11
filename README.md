@@ -1,6 +1,6 @@
 Requires Python 3.6+
 
-# Scrapy UI
+# Scrapy GUI
 A simple, Qt-Webengine powered web browser with built in functionality for testing scrapy spider code.
 
 Also includes an addon to enable a GUI for use with the scrapy shell.
@@ -27,10 +27,10 @@ You can import the package from PyPi using
 
 > pip install scrapy_gui
 
-Then you can import it to a shell using `scrapy_ui`
+Then you can import it to a shell using `import scrapy_gui`.
 
 # Standalone UI
-The standlaone UI can be opened by using `from scrapy_ui.open_browser()` from a python shell. This consists of a web browser and a set of tools to analyse its contents.
+The standlaone UI can be opened by using `scrapy_gui.open_browser()` from a python shell. This consists of a web browser and a set of tools to analyse its contents.
 
 ## Browser Tab
 Enter any url into search bar and hit return or press the Go button. When the loading animation finishes it will be ready to parse in the Tools tab.
@@ -84,7 +84,7 @@ It is possible to integrate this tool with the scrapy shell. This will allow you
 
 To use it in your shell import the load_selector method using:
 
-`from scrapy_ui import load_selector`
+`from scrapy_gui import load_selector`
 
 Then you can write load_selector(YOUR_SELECTOR) to open a window with your selector loaded into it.
 
