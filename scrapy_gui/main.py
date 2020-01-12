@@ -45,4 +45,4 @@ class Main(QMainWindow):
 def open_browser():
     app = QApplication(sys.argv)
     main = Main()
-    sys.exit(app.exec_())
+    app.exec_()
