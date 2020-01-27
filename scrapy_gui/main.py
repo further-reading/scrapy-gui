@@ -19,7 +19,7 @@ class Main(QMainWindow):
         tabs = QTabWidget()
         self.browser = QtBrowser(main=self)
         self.queries = Queries(main=self)
-        self.source = TextViewer()
+        self.source_viewer = TextViewer()
         self.notes = QPlainTextEdit()
         tabs.addTab(self.browser, 'Browser')
         tabs.addTab(self.queries, 'Tools')
@@ -35,7 +35,7 @@ class Main(QMainWindow):
         html = response.text
         selector = Selector(text=html)
         self.queries.update_source(selector)
-        self.source.setPlainText(html)
+        self.source_viewer.setPlainText(html)
 
 
 def open_browser():

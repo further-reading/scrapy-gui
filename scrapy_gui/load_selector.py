@@ -15,7 +15,7 @@ class MiniUI(QMainWindow):
         self.setWindowTitle('Shell UI')
         tabs = QTabWidget()
         self.queries = Queries(main=self)
-        self.source = TextViewer()
+        self.source_viewer = TextViewer()
         self.notes = QPlainTextEdit()
         tabs.addTab(self.queries, 'Tools')
         tabs.addTab(self.source, 'Source')
@@ -24,7 +24,7 @@ class MiniUI(QMainWindow):
 
     def add_selector(self, selector):
         self.queries.update_source(selector)
-        self.source.setPlainText(selector.text)
+        self.source_viewer.setPlainText(selector.text)
 
 
 def load_selector(selector):
