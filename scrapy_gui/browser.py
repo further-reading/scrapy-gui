@@ -23,7 +23,7 @@ class Main(QMainWindow):
         self.notes = QPlainTextEdit()
         tabs.addTab(self.browser, 'Browser')
         tabs.addTab(self.queries, 'Tools')
-        tabs.addTab(self.source, 'Source')
+        tabs.addTab(self.source_viewer, 'Source')
         tabs.addTab(self.notes, 'Notes')
         self.setCentralWidget(tabs)
         self.show()

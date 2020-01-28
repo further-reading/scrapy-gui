@@ -18,7 +18,7 @@ class MiniUI(QMainWindow):
         self.source_viewer = TextViewer()
         self.notes = QPlainTextEdit()
         tabs.addTab(self.queries, 'Tools')
-        tabs.addTab(self.source, 'Source')
+        tabs.addTab(self.source_viewer, 'Source')
         tabs.addTab(self.notes, 'Notes')
         self.setCentralWidget(tabs)
 
