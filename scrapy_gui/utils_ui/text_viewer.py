@@ -72,6 +72,12 @@ class TextViewer(QWidget):
         return cursor
 
     def set_format(self):
+        # clear current formatting first
+        cursor = self.source_text.textCursor()
+        cursor.select(QTextCursor.Document)
+        cursor.setCharFormat(QTextCharFormat())
+        cursor.clearSelection()
+
         for index in self.indexes:
             cursor = self.make_cursor(index)
             cursor.setCharFormat(self.keywordFormat)
