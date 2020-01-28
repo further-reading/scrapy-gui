@@ -35,7 +35,7 @@ class Main(QMainWindow):
         html = response.text
         selector = Selector(text=html)
         self.queries.update_source(selector)
-        self.source_viewer.setPlainText(html)
+        self.source_viewer.setPrettyHtml(html)
 
 
 def open_browser():

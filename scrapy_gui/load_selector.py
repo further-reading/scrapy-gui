@@ -24,7 +24,7 @@ class MiniUI(QMainWindow):
 
     def add_selector(self, selector):
         self.queries.update_source(selector)
-        self.source_viewer.setPlainText(selector.text)
+        self.source_viewer.setPrettyHtml(selector.text)
 
 
 def load_selector(selector):

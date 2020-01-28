@@ -45,12 +45,15 @@ class TextViewer(QWidget):
         self.keywordFormat.setFontWeight(QFont.Bold)
 
     def setPlainText(self, text):
-        # use bs4 to prettify the text
+        self.source_text.setReadOnly(False)
+        self.source_text.setPlainText(text)
+        self.source_text.setReadOnly(True)
+
+    def setPrettyHtml(self, text):
+        # uses bs4 to prettify html input
         soup = BeautifulSoup(text, 'html.parser')
         html_out = soup.prettify()
-        self.source_text.setReadOnly(False)
-        self.source_text.setPlainText(html_out)
-        self.source_text.setReadOnly(True)
+        self.setPlainText(html_out)
 
     def find_pressed(self):
         self.source_text.setReadOnly(False)
