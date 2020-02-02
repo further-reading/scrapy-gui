@@ -2,8 +2,9 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
+from bs4 import BeautifulSoup
 
-class EnhancedTextViewer(QWidget):
+class TextViewer(QWidget):
     current_index = 0
     total_hits = 0
 
@@ -48,6 +49,12 @@ class EnhancedTextViewer(QWidget):
         self.source_text.setPlainText(text)
         self.source_text.setReadOnly(True)
 
+    def setPrettyHtml(self, text):
+        # uses bs4 to prettify html input
+        soup = BeautifulSoup(text, 'html.parser')
+        html_out = soup.prettify()
+        self.setPlainText(html_out)
+
     def find_pressed(self):
         self.source_text.setReadOnly(False)
         self.find_indexes()
@@ -65,6 +72,12 @@ class EnhancedTextViewer(QWidget):
         return cursor
 
     def set_format(self):
+        # clear current formatting first
+        cursor = self.source_text.textCursor()
+        cursor.select(QTextCursor.Document)
+        cursor.setCharFormat(QTextCharFormat())
+        cursor.clearSelection()
+
         for index in self.indexes:
             cursor = self.make_cursor(index)
             cursor.setCharFormat(self.keywordFormat)

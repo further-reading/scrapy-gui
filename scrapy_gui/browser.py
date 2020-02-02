@@ -1,10 +1,9 @@
 from PyQt5.QtWidgets import *
 
-from bs4 import BeautifulSoup
 from parsel import Selector
 import requests
 
-from .utils_ui.text_processor import EnhancedTextViewer
+from .utils_ui.text_viewer import TextViewer
 from .browser_window.browser import QtBrowser
 from .utils_ui.scrapy_tools import Queries
 import sys
@@ -20,11 +19,11 @@ class Main(QMainWindow):
         tabs = QTabWidget()
         self.browser = QtBrowser(main=self)
         self.queries = Queries(main=self)
-        self.source = EnhancedTextViewer()
+        self.source_viewer = TextViewer()
         self.notes = QPlainTextEdit()
         tabs.addTab(self.browser, 'Browser')
         tabs.addTab(self.queries, 'Tools')
-        tabs.addTab(self.source, 'Source')
+        tabs.addTab(self.source_viewer, 'Source')
         tabs.addTab(self.notes, 'Notes')
         self.setCentralWidget(tabs)
         self.show()
@@ -32,14 +31,11 @@ class Main(QMainWindow):
     def update_source(self, url):
         # pyqt5 webengine has the final html including manipulation from javascript, etc
         # for scraping with scrapy the first one matters, so will get again
-        # in future = look for way to grab initial html response from pyqt5
         response = requests.get(url)
         html = response.text
         selector = Selector(text=html)
         self.queries.update_source(selector)
-        soup = BeautifulSoup(html, 'html.parser')
-        html_out = soup.prettify()
-        self.source.setPlainText(html_out)
+        self.source_viewer.setPrettyHtml(html)
 
 
 def open_browser():
