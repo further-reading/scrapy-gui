@@ -71,7 +71,7 @@ def user_fun(results, selector):
         self.addWidget(self.results)
 
     def do_query(self):
-        if self.html is None:
+        if self.selector is None:
             return
         parser = Parser(self.selector)
         query, query_type = self.query_section.get_query()
@@ -124,6 +124,7 @@ class QueryEntry(QWidget):
 class QueryChoiceEntry(QueryEntry):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.query_type = 'css'
 
     def initUI(self):
         grid = QGridLayout()
@@ -134,13 +135,20 @@ class QueryChoiceEntry(QueryEntry):
 
         css_button = QRadioButton(f'CSS')
         grid.addWidget(css_button, 1, 0)
+        css_button.toggled.connect(lambda x: self.update_query(x, 'css'))
+        css_button.setChecked(True)
 
-        css_button = QRadioButton(f'XPath')
-        grid.addWidget(css_button, 1, 1)
+        xpath_button = QRadioButton(f'XPath')
+        xpath_button.toggled.connect(lambda x: self.update_query(x, 'xpath'))
+        grid.addWidget(xpath_button, 2, 0)
 
         self.query = QPlainTextEdit()
-        grid.addWidget(self.query, 2, 0, 1, 2)
+        grid.addWidget(self.query, 3, 0, 1, 2)
         self.query.setLineWrapMode(QPlainTextEdit.NoWrap)
+
+    def update_query(self, selected, query_type):
+        if selected:
+            self.query_type = query_type
 
     def get_query(self):
         return self.query.toPlainText(), self.query_type
