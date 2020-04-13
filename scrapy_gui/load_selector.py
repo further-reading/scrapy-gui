@@ -12,7 +12,7 @@ class MiniUI(QMainWindow):
         self.init_ui()
 
     def init_ui(self):
-        self.setWindowTitle('Shell UI')
+        self.setWindowTitle('Scrapy GUI')
         tabs = QTabWidget()
         self.queries = Queries(main=self)
         self.source_viewer = TextViewer()
