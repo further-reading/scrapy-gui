@@ -15,7 +15,7 @@ class Main(QMainWindow):
         self.init_ui()
 
     def init_ui(self):
-        self.setWindowTitle('Browser')
+        self.setWindowTitle('Scrapy GUI - Browser')
         tabs = QTabWidget()
         self.browser = QtBrowser(main=self)
         self.queries = Queries(main=self)
