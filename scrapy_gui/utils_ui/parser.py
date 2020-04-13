@@ -8,20 +8,23 @@ class Parser:
     def __init__(self, selector):
         self.selector = selector
 
-    def do_query(self, css, selector, regex=None, function=None):
+    def do_query(self, query, query_type, selector, regex=None, function=None):
         try:
-            results = self.selector.css(css)
-        except (ExpressionError, SelectorSyntaxError) as e:
-            message = f'Error parsing css query\n\n{e}'
+            if query_type == 'css':
+                results = self.selector.css(query)
+            elif query_type == 'xpath':
+                results = self.selector.xpath(query)
+        except (ExpressionError, SelectorSyntaxError, ValueError) as e:
+            message = f'Error parsing {query_type} query\n\n{e}'
             raise errors.QueryError(
-                title='CSS Error',
+                title=f'{query_type.title()} Error',
                 message=message,
                 error_type='critical',
             )
         if not results:
             raise errors.QueryError(
                 title='CSS Empty',
-                message=f'No results for CSS Query\n{css}',
+                message=f'No results for {query_type} Query\n{query}',
                 error_type='info',
             )
         if regex:
