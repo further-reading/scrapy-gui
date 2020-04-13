@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import *
 
 from .utils_ui.text_viewer import TextViewer
-from .utils_ui.scrapy_tools import Queries
+from .utils_ui.tools_tab_ui import Queries
 
 import sys
 

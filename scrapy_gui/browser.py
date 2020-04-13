@@ -5,7 +5,7 @@ import requests
 
 from .utils_ui.text_viewer import TextViewer
 from .browser_window.browser import QtBrowser
-from .utils_ui.scrapy_tools import Queries
+from .utils_ui.tools_tab_ui import Queries
 import sys
 
 
