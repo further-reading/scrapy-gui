@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="scrapy-GUI",
-    version="1.1",
+    version="1.1.1",
     author="Roy Healy",
     author_email="roy.healy87@gmail.com",
     description="A package for offering UI tools for building scrapy queries",
