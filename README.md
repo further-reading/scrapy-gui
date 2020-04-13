@@ -90,4 +90,4 @@ Then you can write load_selector(YOUR_SELECTOR) to open a window with your selec
 
 > For example `load_selector(response)` will load your response into the UI.
 
-When you run the code a window named `Shell UI` will open that contains the `Tools`, `Source` and `Notes` tabs from the standalone window mentioned above.
+When you run the code a window named `Scrapy GUI` will open that contains the `Tools`, `Source` and `Notes` tabs from the standalone window mentioned above.
