@@ -14,7 +14,7 @@ class Parser:
                 results = self.selector.css(query)
             elif query_type == 'xpath':
                 results = self.selector.xpath(query)
-        except (ExpressionError, SelectorSyntaxError) as e:
+        except (ExpressionError, SelectorSyntaxError, ValueError) as e:
             message = f'Error parsing {query_type} query\n\n{e}'
             raise errors.QueryError(
                 title=f'{query_type.title()} Error',
