@@ -20,7 +20,7 @@ class BigHandleSplitter(QSplitter):
 
 class Queries(BigHandleSplitter):
     url = None
-    html = None
+    selector = None
     use_re = False
 
     def __init__(self, *args, main):
@@ -33,9 +33,9 @@ class Queries(BigHandleSplitter):
         top = BigHandleSplitter(Qt.Horizontal)
         left_frame = BigHandleSplitter(Qt.Vertical)
 
-        self.css_section = QueryEntry(label='CSS Query:')
-        self.css_section.initUI()
-        left_frame.addWidget(self.css_section)
+        self.query_section = QueryChoiceEntry(label='Query')
+        self.query_section.initUI()
+        left_frame.addWidget(self.query_section)
 
         left_bottom = QFrame()
         left_bottom_box = QVBoxLayout()
@@ -56,7 +56,9 @@ class Queries(BigHandleSplitter):
         self.function_section.query.setPlainText(
             """# import packages
 
-# must have 'user_fun' function with\n'results' and 'selector' as arguments\nand return a list
+# must have 'user_fun' function with
+# 'results' and 'selector' as arguments
+# and return a list
 
 def user_fun(results, selector):
   # your code
@@ -69,10 +71,10 @@ def user_fun(results, selector):
         self.addWidget(self.results)
 
     def do_query(self):
-        if self.html is None:
+        if self.selector is None:
             return
-        parser = Parser(self.html)
-        css = self.css_section.get_query()
+        parser = Parser(self.selector)
+        query, query_type = self.query_section.get_query()
 
         if self.re_section.use:
             regex = self.re_section.get_query()
@@ -84,7 +86,7 @@ def user_fun(results, selector):
             function = None
 
         try:
-            results = parser.do_query(css, parser.selector, regex, function)
+            results = parser.do_query(query, query_type, parser.selector, regex, function)
         except errors.QueryError as e:
             errors.show_error_dialog(
                 self,
@@ -97,7 +99,7 @@ def user_fun(results, selector):
         self.results.add_results(results)
 
     def update_source(self, text):
-        self.html = text
+        self.selector = text
 
 
 class QueryEntry(QWidget):
@@ -119,6 +121,37 @@ class QueryEntry(QWidget):
     def get_query(self):
         return self.query.toPlainText()
 
+class QueryChoiceEntry(QueryEntry):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.query_type = 'css'
+
+    def initUI(self):
+        grid = QGridLayout()
+        self.setLayout(grid)
+
+        label = QLabel(self.label)
+        grid.addWidget(label, 0, 0)
+
+        css_button = QRadioButton(f'CSS')
+        grid.addWidget(css_button, 1, 0)
+        css_button.toggled.connect(lambda x: self.update_query(x, 'css'))
+        css_button.setChecked(True)
+
+        xpath_button = QRadioButton(f'XPath')
+        xpath_button.toggled.connect(lambda x: self.update_query(x, 'xpath'))
+        grid.addWidget(xpath_button, 2, 0)
+
+        self.query = QPlainTextEdit()
+        grid.addWidget(self.query, 3, 0, 1, 2)
+        self.query.setLineWrapMode(QPlainTextEdit.NoWrap)
+
+    def update_query(self, selected, query_type):
+        if selected:
+            self.query_type = query_type
+
+    def get_query(self):
+        return self.query.toPlainText(), self.query_type
 
 class OptionalQuery(QueryEntry):
     def __init__(self, *args, **kwargs):
