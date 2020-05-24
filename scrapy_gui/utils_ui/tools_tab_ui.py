@@ -48,6 +48,11 @@ class Queries(BigHandleSplitter):
         run_button = QPushButton('Run Query')
         run_button.clicked.connect(self.do_query)
         left_bottom_box.addWidget(run_button)
+
+        copy_button = QPushButton('Copy Query')
+        copy_button.clicked.connect(self.copy_query)
+        left_bottom_box.addWidget(copy_button)
+
         left_frame.addWidget(left_bottom)
         top.addWidget(left_frame)
 
@@ -100,6 +105,18 @@ def user_fun(results, selector):
 
     def update_source(self, text):
         self.selector = text
+
+    def copy_query(self):
+        cb = QApplication.clipboard()
+        cb.clear(mode=cb.Clipboard)
+        query, query_type = self.query_section.get_query()
+        text = f"sel.{query_type}('{query}')"
+        if self.re_section.use:
+            text += f'.re({self.re_section.get_query()})'
+        else:
+            text += '.getall()'
+
+        cb.setText(text, mode=cb.Clipboard)
 
 
 class QueryEntry(QWidget):
