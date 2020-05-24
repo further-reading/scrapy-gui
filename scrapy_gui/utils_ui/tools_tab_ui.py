@@ -107,11 +107,16 @@ def user_fun(results, selector):
         self.selector = text
 
     def copy_query(self):
-        print('NYI')
-        # check if query is css or xpath
-        # check if re is implemented
-        # output = sel.[css|xpath](query).[getall()|re.(regex)]
-        # add output to clipboard
+        cb = QApplication.clipboard()
+        cb.clear(mode=cb.Clipboard)
+        query, query_type = self.query_section.get_query()
+        text = f"sel.{query_type}('{query}')"
+        if self.re_section.use:
+            text += f'.re({self.re_section.get_query()})'
+        else:
+            text += '.getall()'
+
+        cb.setText(text, mode=cb.Clipboard)
 
 
 class QueryEntry(QWidget):
