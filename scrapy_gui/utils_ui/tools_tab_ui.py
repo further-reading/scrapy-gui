@@ -48,6 +48,11 @@ class Queries(BigHandleSplitter):
         run_button = QPushButton('Run Query')
         run_button.clicked.connect(self.do_query)
         left_bottom_box.addWidget(run_button)
+
+        copy_button = QPushButton('Copy Query')
+        copy_button.clicked.connect(self.copy_query)
+        left_bottom_box.addWidget(copy_button)
+
         left_frame.addWidget(left_bottom)
         top.addWidget(left_frame)
 
@@ -100,6 +105,13 @@ def user_fun(results, selector):
 
     def update_source(self, text):
         self.selector = text
+
+    def copy_query(self):
+        print('NYI')
+        # check if query is css or xpath
+        # check if re is implemented
+        # output = sel.[css|xpath](query).[getall()|re.(regex)]
+        # add output to clipboard
 
 
 class QueryEntry(QWidget):
